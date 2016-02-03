@@ -1,0 +1,384 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+__author__ = "Paul Schultz"
+__date__ = "Feb 03, 2016"
+__version__ = "v0.1"
+
+import numpy as np
+
+import matplotlib
+from matplotlib import pyplot
+from matplotlib import cycler
+from matplotlib.cm import register_cmap
+from matplotlib.colors import ListedColormap
+
+class OwnPlot(object):
+    def __init__(self, output='paper'):
+
+        self.colour_map = ListedColormap(
+            np.array(
+                ['#1f77b4', '#33a02c', '#ff7f00', '#6a3d9a', '#e31a1c', '#a6cee3', '#b2df8a', '#fb9a99', '#fdbf6f', '#cab2d6']),
+            'custom'
+        )
+        register_cmap('custom', cmap=self.colour_map)
+
+        # base parameters
+        self.params = {}
+
+        if output == 'paper':
+            self.textsize = 40
+            self.params['figure.figsize'] = (11.69, 8.27)
+            self.params['savefig.format'] = 'pdf'
+            self.params['pdf.compression'] = 6  # 0 to 9
+            self.params['pdf.fonttype'] = 42
+            self.params['savefig.dpi'] = 300
+        elif output == 'talk':
+            self.textsize = 20
+            self.params['figure.figsize'] = (11.69 / 2., 8.27 / 2.)
+            self.params['savefig.format'] = 'png'
+            self.params['savefig.dpi'] = 300
+        else:
+            raise ValueError('Invalid image format. Either paper or talk!')
+
+        common_params = {'xtick.labelsize': .9 * self.textsize,
+                         'ytick.labelsize': .9 * self.textsize,
+                         'xtick.major.size': 5,  # major tick size in points
+                         'xtick.minor.size': 2,  # minor tick size in points
+                         'ytick.major.size': 5,  # major tick size in points
+                         'ytick.minor.size': 2,  # minor tick size in points
+                         'xtick.major.width': 2,  # major tick size in points
+                         'xtick.minor.width': .5,  # minor tick size in points
+                         'ytick.major.width': 2,  # major tick size in points
+                         'ytick.minor.width': .5,  # minor tick size in points
+                         'xtick.major.pad': 8,  # distance to major tick label in points
+                         'xtick.minor.pad': 8,
+                         'ytick.major.pad': 4,  # distance to major tick label in points
+                         'ytick.minor.pad': 4,
+                         'xtick.direction': 'in',
+                         'ytick.direction': 'in',
+                         'axes.labelsize': self.textsize,
+                         'axes.linewidth': 3,
+                         'axes.unicode_minus': True,
+                         'axes.formatter.use_mathtext': True,
+                         'axes.prop_cycle': cycler('color', list(self.colour_map.colors)) +
+                                            cycler('linestyle', ['-', '--', '-.', ':', '.', '-', '--', '-.', ':', '.']),
+                         'axes.xmargin': 0.05,
+                         'axes.ymargin': 0.05,
+                         'axes.formatter.use_mathtext': True,
+                         'axes.labelweight': 'bold',
+                         'contour.negative_linestyle': 'dashed',
+                         'lines.markersize': 10,  # size in points
+                         'legend.fontsize': .6 * self.textsize,
+                         'legend.numpoints': 2,
+                         'legend.handlelength': 1.,
+                         'legend.fancybox': True,
+                         'lines.linewidth': 3,
+                         'grid.linewidth': 1,
+                         'image.cmap': 'custom',
+                         # 'figure.autolayout': True,
+                         'font.family': 'serif',
+                         'font.serif': 'cm10',
+                         'font.size': self.textsize,
+                         'font.weight': 'bold',
+                         'text.usetex': True,
+                         'text.latex.preamble': r'\boldmath',
+                         'savefig.transparent': True,
+                         'verbose.level': 'helpful'
+                         }
+
+        self.params.update(common_params)
+        matplotlib.rcParams.update(self.params)
+
+        self.figures = []
+
+    def add_lineplot(self, x=None, lines={}, shades={}, labels=['x', 'y'], colourscheme="standard", grid=False):
+
+        assert len(labels) == 2
+        assert len(lines.keys()) <= self.colour_map.N
+
+        if x is None:
+            x = np.arange(len(lines[0]))
+
+        if shades:
+            assert sorted(shades.keys()) == sorted(lines.keys())
+
+        # determine boundaries
+        xmin = np.min(x)
+        xmax = np.max(x)
+        if not shades:
+            ymin = np.min([np.min(l) for l in lines.itervalues()])
+            ymax = np.max([np.max(l) for l in lines.itervalues()])
+        else:
+            ymin = np.min([np.min(l) for l in shades.itervalues()])
+            ymax = np.max([np.max(l) for l in shades.itervalues()])
+
+        xmargin = (xmax - xmin) / 200.
+        ymargin = (ymax - ymin) / 200.
+
+        fig, ax = pyplot.subplots(nrows=1, ncols=1)
+
+        ax.axis([xmin - xmargin, xmax + xmargin, ymin - ymargin, ymax + ymargin])
+        ax.grid()
+        for i in lines.keys():
+            if shades:
+                shade = ax.fill_between(x, shades[i][0], shades[i][1], alpha=0.3, edgecolor='none', facecolor='gray')
+                ax.plot(x, lines[i], marker='o', mew='3', mec=shade._facecolors[0])#, ms=12)
+            else:
+                ax.plot(x, lines[i], marker='o', mec='w', mew='3')#, ms=10)
+        ax.set_xlabel(labels[0])
+        ax.set_ylabel(labels[1])
+        fig.tight_layout()
+
+        self.figures.append(fig)
+
+    def add_distplot(self, x, y, labels=['x', 'y'], linestyle='-', filled=True, text=True):
+
+        assert len(labels) == 2
+
+        from scipy.stats.mstats import mquantiles
+
+        m = np.mean(y, axis=1)
+        q = mquantiles(y, axis=1, prob=list([.05, .25, .75, .95]))
+
+        # determine boundaries
+        xmin = np.min(x)
+        xmax = np.max(x)
+        ymin = y.min()
+        ymax = y.max()
+
+        xmargin = (xmax - xmin) / 200.
+        ymargin = (ymax - ymin) / 200.
+
+        fig, ax = pyplot.subplots(nrows=1, ncols=1)
+
+        ax.axis([xmin - xmargin, xmax + xmargin, ymin - ymargin, ymax + ymargin])
+
+        if filled:
+            ax.fill_between(x, q[:, 0],
+                            q[:, 3], facecolor='k', alpha=0.1)
+            ax.fill_between(x, q[:, 1],
+                            q[:, 2], facecolor='k', alpha=0.1)
+        else:
+            ax.plot(x, q[:, 1], color='r', linestyle='--', label='25\%')
+            ax.plot(x, q[:, 2], color='r', linestyle='--', label='75\%')
+            ax.plot(x, q[:, 0], color='r', linestyle=':', label='5\%')
+            ax.plot(x, q[:, 3], color='r', linestyle=':', label='95\%')
+
+        if text:
+            ax.text(x[1], q[1, 0], '5\%', fontsize=.6 * self.textsize)
+            ax.text(x[2], q[2, 1], '25\%', fontsize=.6 * self.textsize)
+            ax.text(x[3], q[3, 2], '75\%', fontsize=.6 * self.textsize)
+            ax.text(x[4], q[4, 3], '95\%', fontsize=.6 * self.textsize)
+
+        ax.plot(x, m, marker='o', mec='w', mew='3', ms=10)
+
+        ax.set_xlabel(labels[0])
+        ax.set_ylabel(labels[1])
+
+        fig.tight_layout()
+
+        self.figures.append(fig)
+
+    def add_contour(self, x, y, z, labels=['x', 'y', 'z'], sym=False, text=False):
+
+        assert len(labels) == 3
+
+        if sym:
+            cmap = pyplot.get_cmap('RdYlBu')
+        else:
+            cmap = pyplot.get_cmap('bone')
+
+        backup = matplotlib.rcParams['lines.linewidth']
+        matplotlib.rcParams['lines.linewidth'] = 1
+
+        # determine boundaries
+        xmin = x.min()
+        xmax = x.max()
+        ymin = y.min()
+        ymax = y.max()
+
+        r = int(np.log(max(abs(z.min()), abs(z.max())))) - 1
+        zmin = np.floor(z.min() * 10. ** r) / 10. ** r
+        zmax = np.floor(z.max() * 10. ** r) / 10. ** r
+        levels = np.linspace(zmin, zmax, 11, endpoint=True)
+
+        fig, ax = pyplot.subplots(nrows=1, ncols=1)
+
+        fig.tight_layout()
+
+        c = ax.contourf(x, y, z, levels=levels, cmap=cmap, origin='lower', antialiased=True, vmin=zmin, vmax=zmax)
+        cl = ax.contour(x, y, z, colors='k', levels=levels)
+        if text:
+            ax.clabel(cl, fontsize=.25 * self.textsize, inline=1)
+
+        ax.axis([xmin, xmax, ymin, ymax])
+
+        ax.set_xlabel(labels[0])
+        ax.set_ylabel(labels[1])
+        fig.colorbar(c, label=labels[2])
+
+        self.figures.append(fig)
+
+        matplotlib.rcParams['lines.linewidth'] = backup
+
+    def add_scatter(self, x={}, y={}, labels=['x', 'y'], bins=20):
+        assert len(labels) == 2
+
+        backup = matplotlib.rcParams['figure.figsize']
+        matplotlib.rcParams['figure.figsize'] = (11.69, 11.69)
+
+        if isinstance(x, dict):
+            assert sorted(x.keys()) == sorted(y.keys())
+            assert len(x.keys()) <= self.colour_map.N
+            # determine boundaries
+            xmin = np.min([np.min(l) for l in x.itervalues()])
+            xmax = np.max([np.max(l) for l in x.itervalues()])
+            ymin = np.min([np.min(l) for l in y.itervalues()])
+            ymax = np.max([np.max(l) for l in y.itervalues()])
+        else:
+            # determine boundaries
+            xmin = x.min()
+            xmax = x.max()
+            ymin = y.min()
+            ymax = y.max()
+
+        xmargin = binwidthx = (xmax - xmin) / bins
+        ymargin = binwidthy = (ymax - ymin) / bins
+
+        fig = pyplot.figure()
+
+        pyplot.ylabel(labels[0])
+        pyplot.xlabel(labels[1])
+
+        gs = matplotlib.gridspec.GridSpec(5, 5,
+                                        wspace=0.0,
+                                        hspace=0.0
+                                        )
+
+        axScatter = pyplot.subplot(gs[1:, :4])
+        axHistx = pyplot.subplot(gs[0, :4], sharex=axScatter, frameon=False)
+        axHisty = pyplot.subplot(gs[1:, 4], sharey=axScatter, frameon=False)
+
+        # the scatter plot:
+        axScatter.set_xlim((xmin - xmargin, xmax + xmargin))
+        axScatter.set_ylim((ymin - ymargin, ymax + ymargin))
+        axScatter.plot(np.linspace(xmin, xmax, 1000), np.linspace(ymin, ymax, 1000), ':k')
+        if isinstance(x, dict):
+            axScatter.set_prop_cycle(matplotlib.cycler('marker', ['o', '<', 'd', 's', 'v', 'p', '>', '8', '*', '^']) +
+                                     matplotlib.cycler('mfc', list(self.colour_map.colors)))
+            for k in x.keys():
+                axScatter.plot(x[k], y[k], lw=0., alpha=.25)
+        else:
+            axScatter.plot(x, y, 'o', lw=0., alpha=.25)
+        axScatter.set_xlabel(labels[0])
+        axScatter.set_ylabel(labels[1])
+
+        # histograms
+        if isinstance(x, dict):
+            X = [item for sublist in x.values() for item in sublist]
+            Y = [item for sublist in y.values() for item in sublist]
+        else:
+            X = x
+            Y = y
+        binsx = np.arange(xmin - binwidthx, xmax + binwidthx, binwidthx)
+        binsy = np.arange(ymin - binwidthy, ymax + binwidthy, binwidthy)
+        wx = np.ones_like(X) / float(len(X))
+        wy = np.ones_like(Y) / float(len(Y))
+        vx, _, _ = axHistx.hist(X, bins=binsx, weights=wx,
+                                facecolor=self.colour_map.colors[0], alpha=0.75)
+        Xmax = np.ceil(vx.max() * 10.) / 10.
+        axHistx.axis([xmin - xmargin, xmax + xmargin, 0., Xmax])
+        vy, _, _ = axHisty.hist(Y, bins=binsy, weights=wy, orientation='horizontal',
+                                facecolor=self.colour_map.colors[0], alpha=0.75)
+        Ymax = np.ceil(vy.max() * 10.) / 10.
+        axHisty.axis([0., Ymax, ymin - ymargin, ymax + ymargin])
+
+        # axes
+        a, b = axHistx.get_xaxis().get_view_interval()
+        c, d = axHistx.get_yaxis().get_view_interval()
+        axHistx.add_artist(pyplot.Line2D((b, b), (c, d), color='k', linewidth=2*self.params['axes.linewidth']))
+        a, b = axHisty.get_xaxis().get_view_interval()
+        c, d = axHisty.get_yaxis().get_view_interval()
+        axHisty.add_artist(pyplot.Line2D((a, b), (d, d), color='k', linewidth=2*self.params['axes.linewidth']))
+
+        # ticks
+        axScatter.get_xaxis().tick_bottom()
+        axScatter.get_yaxis().tick_left()
+        axHistx.get_xaxis().tick_bottom()
+        axHistx.get_yaxis().tick_right()
+        axHisty.get_xaxis().tick_top()
+        axHisty.get_yaxis().tick_left()
+        axHistx.set_yticks(np.linspace(0, Xmax, 3, endpoint=True)[1:])
+        axHisty.set_xticks(np.linspace(0, Ymax, 3, endpoint=True)[1:])
+        axHistx.tick_params(labelsize=.6*self.textsize)
+        axHisty.tick_params(labelsize=.6*self.textsize)
+        for tl in axHistx.get_xticklabels() + axHisty.get_yticklabels():
+            tl.set_visible(False)
+
+        self.figures.append(fig)
+
+        matplotlib.rcParams['figure.figsize'] = backup
+
+    def add_hist(self, data, label='x', nbins=20):
+
+        # ensure data is nested list
+        if isinstance(data[0], (int, float)):
+            data = list([data,])
+
+        xmin = np.min([np.min(l) for l in data])
+        xmax = np.max([np.max(l) for l in data])
+
+        xmargin = (xmax - xmin) / 100.
+
+        fig, ax = pyplot.subplots(nrows=1, ncols=1)
+
+        fig.tight_layout()
+
+        bottom = np.zeros(nbins)
+        ymax = 0.
+        counter = 0
+        for d in data:
+            c = list(matplotlib.rcParams['axes.prop_cycle'])[counter]['color']
+            h, b = np.histogram(d, bins=nbins, density=True)
+            ax.bar(.5 * (b[1:] + b[:-1]), h, bottom=bottom, color=c, edgecolor='w', align='center', zorder=1)
+            bottom += h
+            counter += 1
+            ymax += h.max()
+
+        ax.set_xlim([xmin - xmargin, xmax + xmargin])
+        ax.set_ylim([0., ymax * 1.1])
+        ax.set_xlabel(label)
+        ax.set_ylabel(r'\textbf{density}')
+
+        ax.yaxis.grid(color='w', linestyle='-', zorder=2)
+
+        self.figures.append(fig)
+
+
+    def save(self, fnames):
+        assert len(fnames) == len(self.figures)
+        for i, fig in enumerate(self.figures):
+            fig.savefig(filename=fnames[i] + '.' + self.params['savefig.format'], bbox_inches='tight')
+
+    def show(self):
+        pyplot.show()
+
+    def show_params(self):
+        for k in matplotlib.rcParams.keys():
+            print k
+
+    def update_params(self, dic):
+        assert all([key in matplotlib.rcParams.keys() for key in dic.keys()])
+        matplotlib.rcParams.update(dic)
+
+
+p = OwnPlot('paper')
+#p.show_params()
+labels = [r'$\phi$']
+x = []
+for i in xrange(3):
+    x.append(np.random.random(100))
+p.add_hist(x)
+p.save(['dummy'])
+p.show()
