@@ -11,17 +11,40 @@ import matplotlib
 from matplotlib import pyplot
 from matplotlib import cycler
 from matplotlib.cm import register_cmap
-from matplotlib.colors import ListedColormap
+from matplotlib.colors import ListedColormap, LinearSegmentedColormap, hex2color
 
 class OwnPlot(object):
+
+    discrete_colours = ListedColormap(
+        np.array(
+            ['#1f77b4', '#33a02c', '#ff7f00', '#6a3d9a', '#e31a1c', '#a6cee3', '#b2df8a', '#fb9a99', '#fdbf6f', '#cab2d6']),
+        'discrete'
+    )
+    register_cmap('discrete', cmap=discrete_colours)
+
+    pik_colours = ListedColormap(
+        np.array(['#e37222', '#009fda', '#69923a', '#8e908f']),
+        'pik'
+    )
+    register_cmap('pik', cmap=pik_colours)
+
+    lin_colours = LinearSegmentedColormap.from_list(
+        'linear', [(0, 'w'), (1, hex2color('#e37222'))]
+    )
+    lin_colours.set_bad(hex2color('#8e908f'))
+    register_cmap('linear', cmap=lin_colours)
+
+    sym_colours = LinearSegmentedColormap.from_list(
+        'sym', [(0, hex2color('#009fda')), (0.5, 'w'), (1, hex2color('#e37222'))]
+    )
+    sym_colours.set_bad(hex2color('#8e908f'))
+    register_cmap('sym', cmap=sym_colours)
+
+    linestyles = ['-', '--', '-.', ':', '.', '-', '--', '-.', ':', '.']
+
     def __init__(self, output='paper'):
 
-        self.colour_map = ListedColormap(
-            np.array(
-                ['#1f77b4', '#33a02c', '#ff7f00', '#6a3d9a', '#e31a1c', '#a6cee3', '#b2df8a', '#fb9a99', '#fdbf6f', '#cab2d6']),
-            'custom'
-        )
-        register_cmap('custom', cmap=self.colour_map)
+        self.set_default_colours('pik')
 
         # base parameters
         self.params = {}
@@ -38,6 +61,8 @@ class OwnPlot(object):
             self.params['figure.figsize'] = (11.69 / 2., 8.27 / 2.)
             self.params['savefig.format'] = 'png'
             self.params['savefig.dpi'] = 300
+        elif output == 'icon':
+            raise NotImplementedError('Simplified plots as icons for talks not implemented yet.')
         else:
             raise ValueError('Invalid image format. Either paper or talk!')
 
@@ -61,8 +86,8 @@ class OwnPlot(object):
                          'axes.linewidth': 3,
                          'axes.unicode_minus': True,
                          'axes.formatter.use_mathtext': True,
-                         'axes.prop_cycle': cycler('color', list(self.colour_map.colors)) +
-                                            cycler('linestyle', ['-', '--', '-.', ':', '.', '-', '--', '-.', ':', '.']),
+                         'axes.prop_cycle': cycler('color', list(self.dfcmp.colors)) +
+                                            cycler('linestyle', self.linestyles[:self.dfcmp.N]),
                          'axes.xmargin': 0.05,
                          'axes.ymargin': 0.05,
                          'axes.formatter.use_mathtext': True,
@@ -75,7 +100,7 @@ class OwnPlot(object):
                          'legend.fancybox': True,
                          'lines.linewidth': 3,
                          'grid.linewidth': 1,
-                         'image.cmap': 'custom',
+                         'image.cmap': self.dfcmp.name,
                          # 'figure.autolayout': True,
                          'font.family': 'serif',
                          'font.serif': 'cm10',
@@ -92,10 +117,22 @@ class OwnPlot(object):
 
         self.figures = []
 
+    @classmethod
+    def paper(cls):
+        return cls(output='paper')
+
+    @classmethod
+    def talk(cls):
+        return cls(output='talk')
+
+    @classmethod
+    def icon(cls):
+        return cls(output='icon')
+
     def add_lineplot(self, x=None, lines={}, shades={}, labels=['x', 'y'], colourscheme="standard", grid=False):
 
         assert len(labels) == 2
-        assert len(lines.keys()) <= self.colour_map.N
+        assert len(lines.keys()) <= self.dfcmp.N
 
         if x is None:
             x = np.arange(len(lines[0]))
@@ -119,10 +156,12 @@ class OwnPlot(object):
         fig, ax = pyplot.subplots(nrows=1, ncols=1)
 
         ax.axis([xmin - xmargin, xmax + xmargin, ymin - ymargin, ymax + ymargin])
-        ax.grid()
+        if grid:
+            ax.grid()
         for i in lines.keys():
             if shades:
-                shade = ax.fill_between(x, shades[i][0], shades[i][1], alpha=0.3, edgecolor='none', facecolor='gray')
+                shade = ax.fill_between(x, shades[i][0], shades[i][1], alpha=0.3, edgecolor='none',
+                                        facecolor=hex2color('#8E908F'))
                 ax.plot(x, lines[i], marker='o', mew='3', mec=shade._facecolors[0])#, ms=12)
             else:
                 ax.plot(x, lines[i], marker='o', mec='w', mew='3')#, ms=10)
@@ -156,9 +195,9 @@ class OwnPlot(object):
 
         if filled:
             ax.fill_between(x, q[:, 0],
-                            q[:, 3], facecolor='k', alpha=0.1)
+                            q[:, 3], facecolor=hex2color('#8E908F'), edgecolor='none', alpha=0.3)
             ax.fill_between(x, q[:, 1],
-                            q[:, 2], facecolor='k', alpha=0.1)
+                            q[:, 2], facecolor=hex2color('#8E908F'), edgecolor='none', alpha=0.3)
         else:
             ax.plot(x, q[:, 1], color='r', linestyle='--', label='25\%')
             ax.plot(x, q[:, 2], color='r', linestyle='--', label='75\%')
@@ -180,14 +219,14 @@ class OwnPlot(object):
 
         self.figures.append(fig)
 
-    def add_contour(self, x, y, z, labels=['x', 'y', 'z'], sym=False, text=False):
+    def add_contour(self, x, y, z, labels=['x', 'y', 'z'], nlevel=10, sym=False, text=False):
 
         assert len(labels) == 3
 
         if sym:
-            cmap = pyplot.get_cmap('RdYlBu')
+            cmap = pyplot.get_cmap('sym')
         else:
-            cmap = pyplot.get_cmap('bone')
+            cmap = pyplot.get_cmap('linear')
 
         backup = matplotlib.rcParams['lines.linewidth']
         matplotlib.rcParams['lines.linewidth'] = 1
@@ -198,10 +237,10 @@ class OwnPlot(object):
         ymin = y.min()
         ymax = y.max()
 
-        r = int(np.log(max(abs(z.min()), abs(z.max())))) - 1
-        zmin = np.floor(z.min() * 10. ** r) / 10. ** r
-        zmax = np.floor(z.max() * 10. ** r) / 10. ** r
-        levels = np.linspace(zmin, zmax, 11, endpoint=True)
+        # r = int(np.log(max(abs(z.min()), abs(z.max()))))
+        zmin = np.floor(z.min())
+        zmax = np.ceil(z.max())
+        levels = np.linspace(zmin, zmax, nlevel + 1, endpoint=True)
 
         fig, ax = pyplot.subplots(nrows=1, ncols=1)
 
@@ -230,7 +269,7 @@ class OwnPlot(object):
 
         if isinstance(x, dict):
             assert sorted(x.keys()) == sorted(y.keys())
-            assert len(x.keys()) <= self.colour_map.N
+            assert len(x.keys()) <= self.dfcmp.N
             # determine boundaries
             xmin = np.min([np.min(l) for l in x.itervalues()])
             xmax = np.max([np.max(l) for l in x.itervalues()])
@@ -266,7 +305,7 @@ class OwnPlot(object):
         axScatter.plot(np.linspace(xmin, xmax, 1000), np.linspace(ymin, ymax, 1000), ':k')
         if isinstance(x, dict):
             axScatter.set_prop_cycle(matplotlib.cycler('marker', ['o', '<', 'd', 's', 'v', 'p', '>', '8', '*', '^']) +
-                                     matplotlib.cycler('mfc', list(self.colour_map.colors)))
+                                     matplotlib.cycler('mfc', list(self.discrete_colours.colors)))
             for k in x.keys():
                 axScatter.plot(x[k], y[k], lw=0., alpha=.25)
         else:
@@ -286,11 +325,11 @@ class OwnPlot(object):
         wx = np.ones_like(X) / float(len(X))
         wy = np.ones_like(Y) / float(len(Y))
         vx, _, _ = axHistx.hist(X, bins=binsx, weights=wx,
-                                facecolor=self.colour_map.colors[0], alpha=0.75)
+                                facecolor=self.dfcmp.colors[0], alpha=0.75)
         Xmax = np.ceil(vx.max() * 10.) / 10.
         axHistx.axis([xmin - xmargin, xmax + xmargin, 0., Xmax])
         vy, _, _ = axHisty.hist(Y, bins=binsy, weights=wy, orientation='horizontal',
-                                facecolor=self.colour_map.colors[0], alpha=0.75)
+                                facecolor=self.dfcmp.colors[0], alpha=0.75)
         Ymax = np.ceil(vy.max() * 10.) / 10.
         axHisty.axis([0., Ymax, ymin - ymargin, ymax + ymargin])
 
@@ -368,17 +407,38 @@ class OwnPlot(object):
         for k in matplotlib.rcParams.keys():
             print k
 
+    def show_cmap(self, cmap_name):
+        assert isinstance(cmap_name, str)
+        a=np.outer(np.arange(0,1,0.01), np.ones(10))
+        pyplot.figure(figsize=(2,10))
+        pyplot.axis("off")
+        pyplot.imshow(a,aspect='auto',interpolation='nearest', cmap=pyplot.get_cmap(cmap_name))
+        pyplot.title(cmap_name,fontsize=15)
+        pyplot.show()
+
     def update_params(self, dic):
         assert all([key in matplotlib.rcParams.keys() for key in dic.keys()])
         matplotlib.rcParams.update(dic)
 
+    def set_default_colours(self, cmap_name):
+        self.dfcmp = pyplot.get_cmap(cmap_name)
+        self.update_params(
+            {
+                'axes.prop_cycle': cycler('color', list(self.dfcmp.colors)) + \
+                    cycler('linestyle', self.linestyles[:self.dfcmp.N]),
+                'image.cmap': self.dfcmp.name
+            }
+        )
+        #TODO color cycler with slected colours
 
-p = OwnPlot('paper')
+
+p = OwnPlot.paper()
+
 #p.show_params()
 labels = [r'$\phi$']
-x = []
-for i in xrange(3):
-    x.append(np.random.random(100))
-p.add_hist(x)
-p.save(['dummy'])
+
+x = np.arange(10)
+z = 1 - 2. * np.random.random([10, 10])
+p.add_contour(x, x, z, sym=True)
+
 p.show()
