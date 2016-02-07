@@ -413,8 +413,8 @@ class OwnPlot(object):
 
         visual_style = dict(
             edge_color='#8e908f',
-            edge_width=3,
-            edge_curved=0.1,
+            edge_width=self.params["axes.linewidth"],
+            #edge_curved=0.1,
             #palette=GradientPalette('#009fda', '#e37222', 10), # for igraph
             vertex_size=100,
             vertex_color='#8e908f',
@@ -449,16 +449,18 @@ class OwnPlot(object):
 
         x, y = zip(*visual_style["layout"])
 
-        margin = max(0.1 * (np.max(x) - np.min(x)), 0.1 * (np.max(y) - np.min(y)))
+        margin = max(0.05 * (np.max(x) - np.min(x)), 0.05 * (np.max(y) - np.min(y)))
         ax.set_xlim([np.min(x) - margin, np.max(x) + margin])
         ax.set_ylim([np.min(y) - margin, np.max(y) + margin])
 
         nodes = ax.scatter(x, y,
-                   c=visual_style["vertex_color"],
-                   s=visual_style["vertex_size"],
-                   cmap=cmap, #vmin=0., vmax=1.,
-                   edgecolor='w',
-                   zorder=2)
+                           c=visual_style["vertex_color"],
+                           s=visual_style["vertex_size"],
+                           cmap=cmap,
+                           vmin=np.floor(np.min(visual_style["vertex_color"])),
+                           vmax=np.ceil(np.max(visual_style["vertex_color"])),
+                           edgecolor='w',
+                           zorder=2)
 
         if labels:
             for i in xrange(graph.vcount()):
@@ -466,7 +468,8 @@ class OwnPlot(object):
                                 size=0.5*self.params["font.size"],
                                 horizontalalignment='left', verticalalignment='bottom')
 
-        fig.colorbar(nodes)
+        cb = fig.colorbar(nodes, orientation='horizontal', shrink=0.66, format=r"%.1f")
+        [t.set_fontsize(self.params["legend.fontsize"]) for t in cb.ax.get_xticklabels()]
 
         self.figures.append(fig)
 
@@ -511,6 +514,7 @@ class OwnPlot(object):
 p = OwnPlot.paper()
 
 #p.show_params()
+
 labels = [r'$\phi$']
 
 x = np.arange(10)
@@ -519,7 +523,7 @@ z = 1 - 2. * np.random.random([10, 10])
 
 import igraph as ig
 g = ig.Graph.GRG(20, 0.4)
-p.add_network(g, styles={"vertex_color":g.degree()})
+p.add_network(g, styles={"vertex_color":np.random.random(20)})
 
 p.save(["test"])
 
