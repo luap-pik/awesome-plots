@@ -35,9 +35,9 @@ class OwnPlot(object):
     register_cmap('linear', cmap=lin_colours)
 
     sym_colours = LinearSegmentedColormap.from_list(
-        'sym', [(0, hex2color('#009fda')), (0.5, 'w'), (1, hex2color('#e37222'))]
+        'sym', [(0, hex2color('#009fda')), (0.5, hex2color('#8e908f')), (1, hex2color('#e37222'))]
     )
-    sym_colours.set_bad(hex2color('#8e908f'))
+    sym_colours.set_bad('k')
     register_cmap('sym', cmap=sym_colours)
 
     linestyles = ['-', '--', '-.', ':', '.', '-', '--', '-.', ':', '.']
@@ -394,6 +394,82 @@ class OwnPlot(object):
 
         self.figures.append(fig)
 
+    def add_network(self, graph, styles={}, sym=True, labels=False):
+        """
+        submit eg vertex color values via styles={"vertex_color":values}
+
+        :param graph:
+        :param styles:
+        :param sym:
+        :return:
+        """
+        from igraph import Graph #, plot, GradientPalette, rescale
+        assert isinstance(graph, Graph)
+
+        if sym:
+            cmap = pyplot.get_cmap("sym")
+        else:
+            cmap = pyplot.get_cmap("linear")
+
+        visual_style = dict(
+            edge_color='#8e908f',
+            edge_width=3,
+            edge_curved=0.1,
+            #palette=GradientPalette('#009fda', '#e37222', 10), # for igraph
+            vertex_size=100,
+            vertex_color='#8e908f',
+            vertex_label=range(graph.vcount())
+        )
+
+        if hasattr(graph.vs,"lat") and hasattr(graph.vs,"lon"):
+            visual_style["layout"] = zip(graph.vs["lat"], graph.vs["lon"])
+        elif hasattr(graph.vs,"x") and hasattr(graph.vs,"y"):
+            visual_style["layout"] = zip(graph.vs["x"], graph.vs["y"])
+        else:
+            visual_style["layout"] = graph.layout_auto()
+            print "Assign random layout for plotting."
+
+        if styles:
+            visual_style.update(styles)
+
+        #plot(graph, target="test.pdf", **visual_style)
+
+        fig, ax = pyplot.subplots(nrows=1, ncols=1)
+
+        fig.tight_layout()
+        ax.axis("off")
+
+        for e in graph.get_edgelist():
+            edge = np.vstack((visual_style["layout"][e[0]], visual_style["layout"][e[1]]))
+            ax.plot(edge[:, 0], edge[:, 1],
+                    color=visual_style["edge_color"],
+                    linestyle='-',
+                    lw=visual_style["edge_width"],
+                    zorder=1)
+
+        x, y = zip(*visual_style["layout"])
+
+        margin = max(0.1 * (np.max(x) - np.min(x)), 0.1 * (np.max(y) - np.min(y)))
+        ax.set_xlim([np.min(x) - margin, np.max(x) + margin])
+        ax.set_ylim([np.min(y) - margin, np.max(y) + margin])
+
+        nodes = ax.scatter(x, y,
+                   c=visual_style["vertex_color"],
+                   s=visual_style["vertex_size"],
+                   cmap=cmap, #vmin=0., vmax=1.,
+                   edgecolor='w',
+                   zorder=2)
+
+        if labels:
+            for i in xrange(graph.vcount()):
+                pyplot.annotate(str(i), xy=(x[i], y[i]), xytext=(3, 3), textcoords='offset points',
+                                size=0.5*self.params["font.size"],
+                                horizontalalignment='left', verticalalignment='bottom')
+
+        fig.colorbar(nodes)
+
+        self.figures.append(fig)
+
 
     def save(self, fnames):
         assert len(fnames) == len(self.figures)
@@ -439,6 +515,13 @@ labels = [r'$\phi$']
 
 x = np.arange(10)
 z = 1 - 2. * np.random.random([10, 10])
-p.add_contour(x, x, z, sym=True)
+#p.add_contour(x, x, z, sym=True)
+
+import igraph as ig
+g = ig.Graph.GRG(20, 0.4)
+p.add_network(g, styles={"vertex_color":g.degree()})
+
+p.save(["test"])
 
 p.show()
+
