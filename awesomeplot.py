@@ -255,7 +255,7 @@ class OwnPlot(object):
 
         ax.set_xlabel(labels[0])
         ax.set_ylabel(labels[1])
-        fig.colorbar(c, label=labels[2])
+        fig.colorbar(c, label=labels[2], format=r"%.1f")
 
         self.figures.append(fig)
 
@@ -510,22 +510,22 @@ class OwnPlot(object):
         )
         #TODO color cycler with slected colours
 
+if __name__ == "__main__":
+    p = OwnPlot.paper()
 
-p = OwnPlot.paper()
+    #p.show_params()
 
-#p.show_params()
+    labels = [r'$\phi$']
 
-labels = [r'$\phi$']
+    x = np.arange(10)
+    z = 1 - 2. * np.random.random([10, 10])
+    #p.add_contour(x, x, z, sym=True)
 
-x = np.arange(10)
-z = 1 - 2. * np.random.random([10, 10])
-#p.add_contour(x, x, z, sym=True)
+    import igraph as ig
+    g = ig.Graph.GRG(20, 0.4)
+    p.add_network(g, styles={"vertex_color":np.random.random(20)})
 
-import igraph as ig
-g = ig.Graph.GRG(20, 0.4)
-p.add_network(g, styles={"vertex_color":np.random.random(20)})
+    p.save(["test"])
 
-p.save(["test"])
-
-p.show()
+    p.show()
 
