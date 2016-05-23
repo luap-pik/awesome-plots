@@ -26,19 +26,19 @@ class AwesomePlot(object):
         np.array(['#e37222', '#009fda', '#69923a', '#8e908f']),
         'pik'
     )
-    register_cmap('pik', cmap=pik_colours)
+    register_cmap(pik_colours.name, cmap=pik_colours)
 
     lin_colours = LinearSegmentedColormap.from_list(
         'linear', [(0, 'w'), (1, hex2color('#e37222'))]
     )
     lin_colours.set_bad(hex2color('#8e908f'))
-    register_cmap('linear', cmap=lin_colours)
+    register_cmap(lin_colours.name, cmap=lin_colours)
 
     sym_colours = LinearSegmentedColormap.from_list(
         'sym', [(0, hex2color('#009fda')), (0.5, hex2color('#8e908f')), (1, hex2color('#e37222'))]
     )
     sym_colours.set_bad('k')
-    register_cmap('sym', cmap=sym_colours)
+    register_cmap(sym_colours.name, cmap=sym_colours)
 
     linestyles = ['-', '--', '-.', ':', '.', '-', '--', '-.', ':', '.']
 
@@ -507,12 +507,12 @@ class AwesomePlot(object):
                 'image.cmap': self.dfcmp.name
             }
         )
-        #TODO color cycler with slected colours
+        #TODO color cycler with selected colours
 
 if __name__ == "__main__":
     p = AwesomePlot.paper()
 
-    #p.show_params()
+    p.show_params()
 
     labels = [r'$\phi$']
 
