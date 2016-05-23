@@ -13,7 +13,7 @@ from matplotlib import cycler
 from matplotlib.cm import register_cmap
 from matplotlib.colors import ListedColormap, LinearSegmentedColormap, hex2color
 
-class OwnPlot(object):
+class AwesomePlot(object):
 
     discrete_colours = ListedColormap(
         np.array(
@@ -90,7 +90,6 @@ class OwnPlot(object):
                                             cycler('linestyle', self.linestyles[:self.dfcmp.N]),
                          'axes.xmargin': 0.05,
                          'axes.ymargin': 0.05,
-                         'axes.formatter.use_mathtext': True,
                          'axes.labelweight': 'bold',
                          'contour.negative_linestyle': 'dashed',
                          'lines.markersize': 10,  # size in points
@@ -108,7 +107,7 @@ class OwnPlot(object):
                          'font.weight': 'bold',
                          'text.usetex': True,
                          'text.latex.preamble': r'\boldmath',
-                         'savefig.transparent': True,
+                         # 'savefig.transparent': True, # problems with transparency, e.g. in Inkscape?
                          'verbose.level': 'helpful'
                          }
 
@@ -511,7 +510,7 @@ class OwnPlot(object):
         #TODO color cycler with slected colours
 
 if __name__ == "__main__":
-    p = OwnPlot.paper()
+    p = AwesomePlot.paper()
 
     #p.show_params()
 
