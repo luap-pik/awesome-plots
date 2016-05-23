@@ -14,7 +14,9 @@ images, customised for PIK corporate design.
 
 The class has the no instance variables.
 
-No inherited methods are overridden.
+Overriden inherited methods::
+
+    (NoneType)  show            : future changes to pyplot.show()
 
 """
 
@@ -74,7 +76,7 @@ class AwesomePlot(object):
     register_cmap(sym_colours.name, cmap=sym_colours)
 
     # linestyle sequence for multiplots
-    linestyles = ['-', '--', '-.', ':', '.', '-', '--', '-.', ':', '.']
+    linestyles = np.tile(['-', '--', '-.', ':'], 1 + discrete_colours.N // 4)[:discrete_colours.N]
 
     def __init__(self, output='paper'):
         """
@@ -483,10 +485,12 @@ class AwesomePlot(object):
         bottom = np.zeros(nbins)
         ymax = 0.
         counter = 0
+        _, b = np.histogram(data[0], bins=nbins, density=True)
         for d in data:
             c = list(matplotlib.rcParams['axes.prop_cycle'])[counter]['color']
-            h, b = np.histogram(d, bins=nbins, density=True)
-            ax.bar(.5 * (b[1:] + b[:-1]), h, bottom=bottom, color=c, edgecolor='w', align='center', zorder=1)
+            h, _ = np.histogram(d, bins=nbins, density=True)
+            ax.bar(.5 * (b[1:] + b[:-1]), h, bottom=bottom, color=c, edgecolor="none", align='center', zorder=1,
+                   width=(xmax - xmin) / (nbins + 1))
             bottom += h
             counter += 1
             ymax += h.max()
