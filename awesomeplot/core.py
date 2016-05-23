@@ -40,8 +40,6 @@ class AwesomePlot(object):
     c) icons (not implemented)
 
     Images are landscape per default.
-
-
     """
 
     # predefine colour maps:
@@ -79,6 +77,15 @@ class AwesomePlot(object):
     linestyles = ['-', '--', '-.', ':', '.', '-', '--', '-.', ':', '.']
 
     def __init__(self, output='paper'):
+        """
+            Initialise an instance of AwesomePlot.
+
+            Parameters
+            ----------
+            output: string
+                can be either "paper", "talk" or "icon"
+
+            """
 
         self.set_default_colours('pik')
 
@@ -154,17 +161,81 @@ class AwesomePlot(object):
 
     @classmethod
     def paper(cls):
+        """
+        Class method yielding an AwesomePlot instance of type "paper"
+
+        Parameters
+        ----------
+        cls: object
+            AwesomePlot class
+
+        Returns
+        -------
+        instance of class AwesomePlot
+
+        """
         return cls(output='paper')
 
     @classmethod
     def talk(cls):
+        """
+        Class method yielding an AwesomePlot instance of type "talk"
+
+        Parameters
+        ----------
+        cls: object
+            AwesomePlot class
+
+        Returns
+        -------
+        instance of class AwesomePlot
+
+        """
         return cls(output='talk')
 
     @classmethod
     def icon(cls):
+        """
+        Class method yielding an AwesomePlot instance of type "icon"
+
+        Parameters
+        ----------
+        cls: object
+            AwesomePlot class
+
+        Returns
+        -------
+        instance of class AwesomePlot
+
+        """
         return cls(output='icon')
 
-    def add_lineplot(self, x=None, lines={}, shades={}, labels=['x', 'y'], colourscheme="standard", grid=False):
+    ###############################################################################
+    # ##                       PUBLIC FUNCTIONS                                ## #
+    ###############################################################################
+
+    def add_lineplot(self, x=None, lines={}, shades={}, labels=['x', 'y'], grid=False):
+        """
+        Plots (multiple) lines with optional shading.
+
+        This function adds a matplotlib figure object to the figure collection of
+        an AwesomePlot instance.
+
+        Parameters
+        ----------
+        x: numpy ndarray (optional)
+            array with x-values common to all lines
+        lines:  dict
+            dictionary of type {key: y} containing y-values,
+            multiple lines need to be distinguished by unique keys
+        shades: dict (optional)
+            dictionary of type {key: [y - l, y +  u]} containing upper and lower
+            intervals to indicate uncertainty, confidence intervals etc.
+        labels: list [str]
+            list containing  meaningful axis labels
+        grid: bool
+            if true, background grid is drawn
+        """
 
         assert len(labels) == 2
         assert len(lines.keys()) <= self.dfcmp.N
