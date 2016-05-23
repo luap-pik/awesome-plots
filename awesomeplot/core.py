@@ -1,12 +1,27 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 __author__ = "Paul Schultz"
-__date__ = "Feb 03, 2016"
-__version__ = "v0.1"
+__date__ = "May 23, 2016"
+__version__ = "v0.2"
 
+"""
+Module contains class AwesomePlot.
+
+Derivative of the matplotlib module. The aim is to create
+visually attractive, unambigous and colour-blind-friendly
+images, customised for PIK corporate design.
+
+The class has the no instance variables.
+
+No inherited methods are overridden.
+
+"""
+
+# Import NumPy for the array object and fast numerics.
 import numpy as np
 
+# import matplotlib and submodules
 import matplotlib
 from matplotlib import pyplot
 from matplotlib import cycler
@@ -14,7 +29,24 @@ from matplotlib.cm import register_cmap
 from matplotlib.colors import ListedColormap, LinearSegmentedColormap, hex2color
 
 class AwesomePlot(object):
+    """
+    AwesomePlot class.
 
+    The class is consistently sets reasonable matplotlib rc parameters for three different use cases.
+    It can be instantiated either to create images for
+
+    a) publications (A4, pdf)
+    b) talks (A5, png)
+    c) icons (not implemented)
+
+    Images are landscape per default.
+
+
+    """
+
+    # predefine colour maps:
+
+    # generic discrete cmap (10 items)
     discrete_colours = ListedColormap(
         np.array(
             ['#1f77b4', '#33a02c', '#ff7f00', '#6a3d9a', '#e31a1c', '#a6cee3', '#b2df8a', '#fb9a99', '#fdbf6f', '#cab2d6']),
@@ -22,24 +54,28 @@ class AwesomePlot(object):
     )
     register_cmap('discrete', cmap=discrete_colours)
 
+    # PIK discrete cmap (4 items)
     pik_colours = ListedColormap(
         np.array(['#e37222', '#009fda', '#69923a', '#8e908f']),
         'pik'
     )
     register_cmap(pik_colours.name, cmap=pik_colours)
 
+    # linear interpolated cmap (based on PIK colours)
     lin_colours = LinearSegmentedColormap.from_list(
         'linear', [(0, 'w'), (1, hex2color('#e37222'))]
     )
     lin_colours.set_bad(hex2color('#8e908f'))
     register_cmap(lin_colours.name, cmap=lin_colours)
 
+    # symmetric interpolated cmap (based on PIK colours)
     sym_colours = LinearSegmentedColormap.from_list(
         'sym', [(0, hex2color('#009fda')), (0.5, hex2color('#8e908f')), (1, hex2color('#e37222'))]
     )
     sym_colours.set_bad('k')
     register_cmap(sym_colours.name, cmap=sym_colours)
 
+    # linestyle sequence for multiplots
     linestyles = ['-', '--', '-.', ':', '.', '-', '--', '-.', ':', '.']
 
     def __init__(self, output='paper'):
@@ -51,14 +87,14 @@ class AwesomePlot(object):
 
         if output == 'paper':
             self.textsize = 40
-            self.params['figure.figsize'] = (11.69, 8.27)
+            self.params['figure.figsize'] = (11.69, 8.268) # A4
             self.params['savefig.format'] = 'pdf'
             self.params['pdf.compression'] = 6  # 0 to 9
             self.params['pdf.fonttype'] = 42
             self.params['savefig.dpi'] = 300
         elif output == 'talk':
             self.textsize = 20
-            self.params['figure.figsize'] = (11.69 / 2., 8.27 / 2.)
+            self.params['figure.figsize'] = (8.268, 5.872) # A5
             self.params['savefig.format'] = 'png'
             self.params['savefig.dpi'] = 300
         elif output == 'icon':
@@ -498,6 +534,13 @@ class AwesomePlot(object):
         assert all([key in matplotlib.rcParams.keys() for key in dic.keys()])
         matplotlib.rcParams.update(dic)
 
+    def portrait(self):
+        canvas = self.params['figure.figsize']
+        if canvas[1] > canvas[0]:
+            raise Warning("Figure is already in portrait orientation.")
+        else:
+            self.params['figure.figsize'] = canvas[::-1]
+
     def set_default_colours(self, cmap_name):
         self.dfcmp = pyplot.get_cmap(cmap_name)
         self.update_params(
@@ -512,7 +555,7 @@ class AwesomePlot(object):
 if __name__ == "__main__":
     p = AwesomePlot.paper()
 
-    p.show_params()
+    p.show_cmap(p.dfcmp.name)
 
     labels = [r'$\phi$']
 

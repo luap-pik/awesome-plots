@@ -5,6 +5,7 @@ from awesomeplot.core import AwesomePlot
 
 p = AwesomePlot.paper()
 
+
 # p.show_params()
 
 labels = [r'$\phi$']
