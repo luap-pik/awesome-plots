@@ -135,7 +135,7 @@ class AwesomePlot(object):
                                             cycler('linestyle', self.linestyles[:self.dfcmp.N]),
                          'axes.xmargin': 0.05,
                          'axes.ymargin': 0.05,
-                         'axes.labelweight': 'bold',
+                         'axes.labelweight': 'normal',
                          'contour.negative_linestyle': 'dashed',
                          'lines.markersize': 10,  # size in points
                          'legend.fontsize': .6 * self.textsize,
@@ -527,7 +527,6 @@ class AwesomePlot(object):
             edgelist = np.vstack(np.where(adjacency > 0)).transpose()
             edgelist = sorted(set([tuple(np.sort(edgelist[i])) for i in range(len(edgelist))]))
 
-
         if sym:
             cmap = pyplot.get_cmap("sym")
         else:
@@ -576,13 +575,9 @@ class AwesomePlot(object):
                     alpha=0.5,
                     zorder=1)
 
-
-
-
         margin = max(0.05 * (np.max(x) - np.min(x)), 0.05 * (np.max(y) - np.min(y)))
         ax.set_xlim([np.min(x) - margin, np.max(x) + margin])
         ax.set_ylim([np.min(y) - margin, np.max(y) + margin])
-
 
         if not visual_style.has_key("vertex_color"):
             nodes = ax.scatter(*args,
@@ -610,8 +605,6 @@ class AwesomePlot(object):
                                 horizontalalignment='left', verticalalignment='bottom')
 
         self.figures.append(fig)
-
-
 
     def save(self, fnames):
         assert len(fnames) == len(self.figures)
@@ -656,6 +649,18 @@ class AwesomePlot(object):
         )
         #TODO color cycler with selected colours
 
+    def set_log(self, fig, log="y"):
+        assert fig in self.figures
+        if log == "y":
+            fig.axes[0].set_yscale('symlog')
+        elif log == "x":
+            fig.axes[0].set_xscale('symlog')
+        elif log == "xy":
+            fig.axes[0].set_xscale('symlog')
+            fig.axes[0].set_yscale('symlog')
+        else:
+            raise ValueError("Invalid input. Must be x, y, or xy.")
+
 if __name__ == "__main__":
     p = AwesomePlot.paper()
 
@@ -670,9 +675,9 @@ if __name__ == "__main__":
     import networkx as nx
     A = nx.to_scipy_sparse_matrix(nx.erdos_renyi_graph(100, 0.01), format="dok")
 
-    p.add_network(A, styles={"vertex_color":np.random.random(100)}, height=True)
+    p.add_network(A, styles={"vertex_color": np.random.random(100)}, height=False)
 
-    p.save(["test"])
+    # p.save(["test"])
 
     p.show()
 
