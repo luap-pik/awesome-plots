@@ -504,7 +504,7 @@ class AwesomePlot(object):
 
         self.figures.append(fig)
 
-    def add_network(self, adjacency, styles={}, sym=True, labels=False):
+    def add_network(self, adjacency, styles={}, sym=True, labels=False, height=False):
         """
         submit eg vertex color values via styles={"vertex_color":values}
 
@@ -513,6 +513,8 @@ class AwesomePlot(object):
         :param sym:
         :return:
         """
+        if height:
+            from mpl_toolkits.mplot3d import Axes3D
         from scipy.sparse import issparse, isspmatrix_dok
 
         if issparse(adjacency):
@@ -542,38 +544,55 @@ class AwesomePlot(object):
             visual_style.update(styles)
 
         if not visual_style.has_key("layout"):
-            visual_style["layout"] = np.random.random([N, 2])
+            if height:
+                visual_style["layout"] = np.random.random([N, 3])
+            else:
+                visual_style["layout"] = np.random.random([N, 2])
             print "Assign random layout for plotting."
 
-        fig, ax = pyplot.subplots(nrows=1, ncols=1)
+        if height:
+            fig = pyplot.figure(1)
+            ax = Axes3D(fig)
+            x, y, z = zip(*visual_style["layout"])
+            args = (x, y, z)
+        else:
+            fig, ax = pyplot.subplots(nrows=1, ncols=1)
+            fig.tight_layout()
+            x, y = zip(*visual_style["layout"])
+            args = (x, y)
 
-        fig.tight_layout()
         ax.axis("off")
 
         for e in edgelist:
             edge = np.vstack((visual_style["layout"][e[0]], visual_style["layout"][e[1]]))
-            ax.plot(edge[:, 0], edge[:, 1],
+            if height:
+                xyz = edge[:, 0], edge[:, 1], edge[:, 2]
+            else:
+                xyz = edge[:, 0], edge[:, 1]
+            ax.plot(*xyz,
                     color=visual_style["edge_color"],
                     linestyle='-',
                     lw=visual_style["edge_width"],
                     alpha=0.5,
                     zorder=1)
 
-        x, y = zip(*visual_style["layout"])
+
+
 
         margin = max(0.05 * (np.max(x) - np.min(x)), 0.05 * (np.max(y) - np.min(y)))
         ax.set_xlim([np.min(x) - margin, np.max(x) + margin])
         ax.set_ylim([np.min(y) - margin, np.max(y) + margin])
 
+
         if not visual_style.has_key("vertex_color"):
-            nodes = ax.scatter(x, y,
+            nodes = ax.scatter(*args,
                                c='#8e908f',
                                s=visual_style["vertex_size"],
                                cmap=cmap,
                                edgecolor='w',
                                zorder=2)
         else:
-            nodes = ax.scatter(x, y,
+            nodes = ax.scatter(*args,
                                c=visual_style["vertex_color"],
                                s=visual_style["vertex_size"],
                                cmap=cmap,
@@ -590,9 +609,8 @@ class AwesomePlot(object):
                                 size=0.5*self.params["font.size"],
                                 horizontalalignment='left', verticalalignment='bottom')
 
-
-
         self.figures.append(fig)
+
 
 
     def save(self, fnames):
@@ -650,10 +668,9 @@ if __name__ == "__main__":
     #p.add_contour(x, x, z, sym=True)
 
     import networkx as nx
-    A = nx.to_scipy_sparse_matrix(nx.erdos_renyi_graph(20, 0.1), format="dok")
+    A = nx.to_scipy_sparse_matrix(nx.erdos_renyi_graph(100, 0.01), format="dok")
 
-    p.add_network(A, styles={"vertex_color":np.random.random(20),
-                             "layout":np.random.random((20, 2))})
+    p.add_network(A, styles={"vertex_color":np.random.random(100)}, height=True)
 
     p.save(["test"])
 
