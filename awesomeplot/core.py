@@ -516,11 +516,12 @@ class AwesomePlot(object):
         from scipy.sparse import issparse
 
         if issparse(adjacency):
-            N = len(adjacency)
+            print "Build network from sparse matrix."
+            N = 20
             edgelist = sorted(set([tuple(np.sort(key)) for key in adjacency.iterkeys()]))
 
         else:
-            N = 20
+            N = len(adjacency)
             edgelist = np.vstack(np.where(adjacency > 0)).transpose()
             edgelist = sorted(set([tuple(np.sort(edgelist[i])) for i in range(len(edgelist))]))
 
@@ -555,6 +556,7 @@ class AwesomePlot(object):
                     color=visual_style["edge_color"],
                     linestyle='-',
                     lw=visual_style["edge_width"],
+                    alpha=0.5,
                     zorder=1)
 
         x, y = zip(*visual_style["layout"])
@@ -648,12 +650,12 @@ if __name__ == "__main__":
     #p.add_contour(x, x, z, sym=True)
 
     import networkx as nx
-    G = nx.erdos_renyi_graph(20, 0.1)
-    A = nx.to_scipy_sparse_matrix(G, format="dok")
+    A = nx.to_scipy_sparse_matrix(nx.erdos_renyi_graph(20, 0.1), format="dok")
 
-    p.add_network(A, styles={"vertex_color":np.random.random(20)})
+    p.add_network(A, styles={"vertex_color":np.random.random(20),
+                             "layout":np.random.random((20, 2))})
 
-    #p.save(["test"])
+    p.save(["test"])
 
     p.show()
 
