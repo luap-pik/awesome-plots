@@ -513,13 +513,13 @@ class AwesomePlot(object):
         :param sym:
         :return:
         """
-        from scipy.sparse import issparse
+        from scipy.sparse import issparse, isspmatrix_dok
 
         if issparse(adjacency):
-            print "Build network from sparse matrix."
-            N = 20
+            assert isspmatrix_dok(adjacency)
+            print "Build network from sparse dok matrix."
+            N = adjacency.shape[0]
             edgelist = sorted(set([tuple(np.sort(key)) for key in adjacency.iterkeys()]))
-
         else:
             N = len(adjacency)
             edgelist = np.vstack(np.where(adjacency > 0)).transpose()
