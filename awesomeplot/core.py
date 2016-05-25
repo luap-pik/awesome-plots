@@ -149,9 +149,9 @@ class AwesomePlot(object):
                          'font.family': 'serif',
                          'font.serif': 'cm10',
                          'font.size': self.textsize,
-                         'font.weight': 'bold',
+                         'font.weight': 'normal',
                          'text.usetex': True,
-                         'text.latex.preamble': r'\boldmath',
+                         #'text.latex.preamble': [r"\usepackage{amsmath}", r'\boldmath'],
                          # 'savefig.transparent': True, # problems with transparency, e.g. in Inkscape?
                          'verbose.level': 'helpful'
                          }
@@ -498,7 +498,7 @@ class AwesomePlot(object):
         ax.set_xlim([xmin - xmargin, xmax + xmargin])
         ax.set_ylim([0., ymax * 1.1])
         ax.set_xlabel(label)
-        ax.set_ylabel(r'\textbf{density}')
+        ax.set_ylabel(r'density')
 
         ax.yaxis.grid(color='w', linestyle='-', zorder=2)
 
