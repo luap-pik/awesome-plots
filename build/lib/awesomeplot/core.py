@@ -605,10 +605,10 @@ class AwesomePlot(object):
                                 horizontalalignment='left', verticalalignment='bottom')
 
         if axis_labels:
-            ax.set_xlabel(axis_labels[0])
-            ax.set_ylabel(axis_labels[1])
+            ax.set_xlabel(axis_labels[0], labelpad=30)
+            ax.set_ylabel(axis_labels[1], labelpad=30)
             if height:
-                ax.set_zlabel(axis_labels[2])
+                ax.set_zlabel(axis_labels[2], labelpad=30)
 
         self.figures.append(fig)
 
