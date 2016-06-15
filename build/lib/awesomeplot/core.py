@@ -504,7 +504,7 @@ class AwesomePlot(object):
 
         self.figures.append(fig)
 
-    def add_network(self, adjacency, styles={}, sym=True, labels=False, height=False):
+    def add_network(self, adjacency, styles={}, sym=True, axis_labels=None, labels=False, height=False):
         """
         submit eg vertex color values via styles={"vertex_color":values}
 
@@ -603,6 +603,12 @@ class AwesomePlot(object):
                 pyplot.annotate(str(i), xy=(x[i], y[i]), xytext=(3, 3), textcoords='offset points',
                                 size=0.5*self.params["font.size"],
                                 horizontalalignment='left', verticalalignment='bottom')
+
+        if axis_labels:
+            ax.set_xlabel(axis_labels[0])
+            ax.set_ylabel(axis_labels[1])
+            if height:
+                ax.set_zlabel(axis_labels[2])
 
         self.figures.append(fig)
 
