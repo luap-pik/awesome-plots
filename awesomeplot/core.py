@@ -533,7 +533,7 @@ class AwesomePlot(object):
             cmap = pyplot.get_cmap("linear")
 
         visual_style = dict(
-            edge_color='#8e908f',
+            edge_color=np.repeat('#8e908f', len(edgelist)),
             edge_width=self.params["axes.linewidth"],
             vertex_size=100,
             vertex_label=range(N)
@@ -549,6 +549,11 @@ class AwesomePlot(object):
                 visual_style["layout"] = np.random.random([N, 2])
             print "Assign random layout for plotting."
 
+        if visual_style.has_key("edge_color_dict"):
+            f = lambda x: visual_style["edge_color_dict"][x]
+            for i, e in enumerate(edgelist):
+                visual_style["edge_color"][i] = f(e)
+
         if height:
             fig = pyplot.figure(1)
             ax = Axes3D(fig)
@@ -562,14 +567,14 @@ class AwesomePlot(object):
 
         # ax.axis("off")
 
-        for e in edgelist:
+        for i, e in enumerate(edgelist):
             edge = np.vstack((visual_style["layout"][e[0]], visual_style["layout"][e[1]]))
             if height:
                 xyz = edge[:, 0], edge[:, 1], edge[:, 2]
             else:
                 xyz = edge[:, 0], edge[:, 1]
             ax.plot(*xyz,
-                    color=visual_style["edge_color"],
+                    color=visual_style["edge_color"][i],
                     linestyle='-',
                     lw=visual_style["edge_width"],
                     alpha=0.5,
