@@ -562,8 +562,37 @@ class AwesomePlot(object):
         if squared:
             matplotlib.rcParams['figure.figsize'] = backup
 
-    def __scatterplotPD(self):
-        pass
+    def __scatterplotPD(self, x={}, y={}, labels=['x', 'y'], bins=20, squared=False):
+
+        if isinstance(x, dict):
+            assert sorted(x.keys()) == sorted(y.keys())
+            assert len(x.keys()) <= self.dfcmp.N
+            # determine boundaries
+            xmin = np.min([np.min(l) for l in x.itervalues()])
+            xmax = np.max([np.max(l) for l in x.itervalues()])
+            ymin = np.min([np.min(l) for l in y.itervalues()])
+            ymax = np.max([np.max(l) for l in y.itervalues()])
+        else:
+            # determine boundaries
+            xmin = x.min()
+            xmax = x.max()
+            ymin = y.min()
+            ymax = y.max()
+
+        xmargin = binwidthx = 1. * (xmax - xmin) / bins
+        ymargin = binwidthy = 1. * (ymax - ymin) / bins
+
+        fig, ax = pyplot.subplots(nrows=1, ncols=1)
+
+        grid = seaborn.jointplot(x[0], y[0],
+                                 kind="reg",
+                                 marginal_kws=dict(bins=bins, rug=True),
+                                 annot_kws=dict(stat="r", loc='best'),
+                                 xlim=(xmin, xmax),
+                                 ylim=(ymin, ymax)
+                                 )
+
+        self.figures.append(fig)
 
     def __histplot(self, data, label='x', nbins=20):
 
@@ -738,15 +767,15 @@ def test_case():
 
     u = np.random.random([n, 3])
 
-    p.add_histplot(data=zip(*u))
+    #p.add_histplot(data=zip(*u))
 
-    p.add_lineplot(x=x, lines={"y": y})
+    #p.add_lineplot(x=x, lines={"y": y})
 
-    p.add_scatterplot(x={0: x}, y={0: y})
+    #p.add_scatterplot(x={0: x}, y={0: y})
 
-    p.add_distplot(x=x, y=z)
+    #p.add_distplot(x=x, y=z)
 
-    p.add_contourplot(x=x, y=x, z=z)
+    #p.add_contourplot(x=x, y=x, z=z)
 
     import networkx as nx
     G = nx.erdos_renyi_graph(100, 0.01)
@@ -754,11 +783,11 @@ def test_case():
     layout = np.vstack(nx.fruchterman_reingold_layout(G, center=10).values())
     layout = np.c_[layout, y]
 
-    p.add_networkplot(adjacency=A,
-                      styles={"vertex_color": np.random.random(100),
-                              "layout": layout},
-                      height=True,
-                      sym=False)
+    # p.add_networkplot(adjacency=A,
+    #                   styles={"vertex_color": np.random.random(100),
+    #                           "layout": layout},
+    #                   height=True,
+    #                   sym=False)
 
     df = pandas.DataFrame(data={"y": np.linspace(0, 10, 10) ** 2,
                                 "y2": np.linspace(0, 10, 10) ** 3,
@@ -777,6 +806,10 @@ def test_case():
             #title=title,
             # legend=None,
             #ax=axes)
+
+    p.use_pandas = True
+
+    p.add_scatterplot(x={0: x**2}, y={0: y})
 
     p.show()
 
