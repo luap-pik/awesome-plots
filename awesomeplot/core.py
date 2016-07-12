@@ -3,7 +3,7 @@
 
 __author__ = "Paul Schultz"
 __date__ = "May 23, 2016"
-__version__ = "v0.2"
+__version__ = "v0.3"
 
 """
 Module contains class AwesomePlot.
@@ -279,6 +279,8 @@ class AwesomePlot(object):
 
         self.figures.append(fig)
 
+        return fig
+
     def add_distplot(self, x, y, labels=['x', 'y'], linestyle='-', filled=True, text=True):
 
         assert len(labels) == 2
@@ -297,6 +299,8 @@ class AwesomePlot(object):
         xmargin = (xmax - xmin) / 200.
         ymargin = (ymax - ymin) / 200.
 
+        scale = np.log(1 + .5 * (xmax - xmin) / len(x))
+
         fig, ax = pyplot.subplots(nrows=1, ncols=1)
 
         ax.axis([xmin - xmargin, xmax + xmargin, ymin - ymargin, ymax + ymargin])
@@ -313,12 +317,12 @@ class AwesomePlot(object):
             ax.plot(x, q[:, 3], color='r', linestyle=':', label='95\%')
 
         if text:
-            ax.text(x[1], q[1, 0], '5\%', fontsize=.6 * self.textsize)
-            ax.text(x[2], q[2, 1], '25\%', fontsize=.6 * self.textsize)
-            ax.text(x[3], q[3, 2], '75\%', fontsize=.6 * self.textsize)
-            ax.text(x[4], q[4, 3], '95\%', fontsize=.6 * self.textsize)
+            ax.text(x[1], q[1, 0] * .95, r'5%') #, fontsize=.6 * self.textsize)
+            ax.text(x[2], q[2, 1] * .95, r'25%') #, fontsize=.6 * self.textsize)
+            ax.text(x[3], q[3, 2] * .95, r'75%') #, fontsize=.6 * self.textsize)
+            ax.text(x[4], q[4, 3] * .95, r'95%') #, fontsize=.6 * self.textsize)
 
-        ax.plot(x, m, marker='o', mec='w', mew='3', ms=10)
+        ax.plot(x, m, marker='o', mec='w', mew=3*scale, ms=10*scale)
 
         ax.set_xlabel(labels[0])
         ax.set_ylabel(labels[1])
@@ -326,6 +330,8 @@ class AwesomePlot(object):
         fig.tight_layout()
 
         self.figures.append(fig)
+
+        return fig
 
     def add_contour(self, x, y, z, labels=['x', 'y', 'z'], nlevel=10, sym=False, text=False):
 
@@ -335,9 +341,6 @@ class AwesomePlot(object):
             cmap = pyplot.get_cmap('sym')
         else:
             cmap = pyplot.get_cmap('linear')
-
-        backup = matplotlib.rcParams['lines.linewidth']
-        matplotlib.rcParams['lines.linewidth'] = 1
 
         # determine boundaries
         xmin = x.min()
@@ -354,8 +357,8 @@ class AwesomePlot(object):
 
         fig.tight_layout()
 
-        c = ax.contourf(x, y, z, levels=levels, cmap=cmap, origin='lower', antialiased=True, vmin=zmin, vmax=zmax)
-        cl = ax.contour(x, y, z, colors='k', levels=levels)
+        c = ax.contourf(x, y, z, levels=levels, cmap=cmap, origin='lower', lw=1, antialiased=True, vmin=zmin, vmax=zmax)
+        cl = ax.contour(x, y, z, colors='k', levels=levels, lw=1)
         if text:
             ax.clabel(cl, fontsize=.25 * self.textsize, inline=1)
 
@@ -367,13 +370,15 @@ class AwesomePlot(object):
 
         self.figures.append(fig)
 
-        matplotlib.rcParams['lines.linewidth'] = backup
+        return fig
 
-    def add_scatter(self, x={}, y={}, labels=['x', 'y'], bins=20):
+
+    def add_scatterplot(self, x={}, y={}, labels=['x', 'y'], bins=20, squared=False):
         assert len(labels) == 2
 
-        backup = matplotlib.rcParams['figure.figsize']
-        matplotlib.rcParams['figure.figsize'] = (11.69, 11.69)
+        if squared:
+            backup = matplotlib.rcParams['figure.figsize']
+            matplotlib.rcParams['figure.figsize'] = (11.69, 11.69)
 
         if isinstance(x, dict):
             assert sorted(x.keys()) == sorted(y.keys())
@@ -390,8 +395,8 @@ class AwesomePlot(object):
             ymin = y.min()
             ymax = y.max()
 
-        xmargin = binwidthx = (xmax - xmin) / bins
-        ymargin = binwidthy = (ymax - ymin) / bins
+        xmargin = binwidthx = 1. * (xmax - xmin) / bins
+        ymargin = binwidthy = 1. * (ymax - ymin) / bins
 
         fig = pyplot.figure()
 
@@ -399,9 +404,9 @@ class AwesomePlot(object):
         pyplot.xlabel(labels[1])
 
         gs = matplotlib.gridspec.GridSpec(5, 5,
-                                        wspace=0.0,
-                                        hspace=0.0
-                                        )
+                                          wspace=0.0,
+                                          hspace=0.0
+                                          )
 
         axScatter = pyplot.subplot(gs[1:, :4])
         axHistx = pyplot.subplot(gs[0, :4], sharex=axScatter, frameon=False)
@@ -465,13 +470,16 @@ class AwesomePlot(object):
 
         self.figures.append(fig)
 
-        matplotlib.rcParams['figure.figsize'] = backup
+        if squared:
+            matplotlib.rcParams['figure.figsize'] = backup
+
+        return fig
 
     def add_hist(self, data, label='x', nbins=20):
 
         # ensure data is nested list
         if isinstance(data[0], (int, float)):
-            data = list([data,])
+            data = list([data, ])
 
         xmin = np.min([np.min(l) for l in data])
         xmax = np.max([np.max(l) for l in data])
@@ -503,6 +511,8 @@ class AwesomePlot(object):
         ax.yaxis.grid(color='w', linestyle='-', zorder=2)
 
         self.figures.append(fig)
+
+        return fig
 
     def add_network(self, adjacency, styles={}, sym=True, axis_labels=None, labels=False, height=False):
         """
@@ -555,8 +565,8 @@ class AwesomePlot(object):
                 visual_style["edge_color"][i] = f(e)
 
         if height:
-            fig = pyplot.figure(1)
-            ax = Axes3D(fig)
+            fig = pyplot.figure()
+            ax = fig.gca(projection='3d')
             x, y, z = zip(*visual_style["layout"])
             args = (x, y, z)
         else:
@@ -597,7 +607,7 @@ class AwesomePlot(object):
                                s=visual_style["vertex_size"],
                                cmap=cmap,
                                vmin=np.floor(np.min(visual_style["vertex_color"])),
-                               vmax=np.ceil(np.min(visual_style["vertex_color"])),
+                               vmax=np.ceil(np.max(visual_style["vertex_color"])),
                                edgecolor='w',
                                zorder=2)
             cb = fig.colorbar(nodes, orientation='horizontal', shrink=0.66, format=r"%.1f")
@@ -617,11 +627,17 @@ class AwesomePlot(object):
 
         self.figures.append(fig)
 
-    def save(self, fnames):
-        assert len(fnames) == len(self.figures)
-        for i, fig in enumerate(self.figures):
-            fig.savefig(filename=fnames[i] + '.' + self.params['savefig.format'], bbox_inches='tight')
+        return fig
+
+    def save(self, fnames, fig = None):
+        if fig:
+            fig.savefig(filename=fnames + '.' + self.params['savefig.format'], bbox_inches='tight')
             self.clear(fig)
+        else:
+            assert len(fnames) == len(self.figures)
+            for i, fig in enumerate(self.figures):
+                fig.savefig(filename=fnames[i] + '.' + self.params['savefig.format'], bbox_inches='tight')
+                self.clear(fig)
 
 
     def clear(self, fig):
@@ -697,10 +713,10 @@ if __name__ == "__main__":
     import networkx as nx
     A = nx.to_scipy_sparse_matrix(nx.erdos_renyi_graph(10, 0.01), format="dok")
 
-    for i in range(21):
-        p.add_network(A, styles={"vertex_color": np.random.random(10)}, height=False)
 
-        p.save(["test/test"+str(i),])
+    f = p.add_network(A, styles={"vertex_color": np.random.random(10)}, height=False)
+
+    p.save("test/test", f)
 
     p.show()
 

@@ -36,8 +36,11 @@ import seaborn
 # pandas is still optional but will become standard in the next version
 import pandas
 
+# import functions that work without pandas
+from core import AwesomePlot as core
 
-class AwesomePlot(object):
+
+class AwesomePlot(core):
     """
     AwesomePlot class.
 
@@ -207,47 +210,38 @@ class AwesomePlot(object):
         if self.use_pandas:
             return self.__lineplotPD(**kwargs)
         else:
-            assert [key in self.__lineplot.__code__.co_varnames for key in kwargs.iterkeys()]
-            return self.__lineplot(**kwargs)
+            assert [key in super(AwesomePlot, self).add_lineplot.__code__.co_varnames for key in kwargs.iterkeys()]
+            return super(AwesomePlot, self).add_lineplot(**kwargs)
 
     def add_distplot(self, **kwargs):
         if self.use_pandas:
             return self.__distplotPD(**kwargs)
         else:
-            return self.__distplot(**kwargs)
+            return super(AwesomePlot, self).add_distplot(**kwargs)
 
     def add_contourplot(self, **kwargs):
         if self.use_pandas:
             return self.__contourplotPD(**kwargs)
         else:
-            return self.__contourplot(**kwargs)
+            return super(AwesomePlot, self).add_contour(**kwargs)
 
     def add_scatterplot(self, **kwargs):
         if self.use_pandas:
             return self.__scatterplotPD(**kwargs)
         else:
-            return self.__scatterplot(**kwargs)
+            return super(AwesomePlot, self).add_scatterplot(**kwargs)
 
     def add_histplot(self, **kwargs):
         if self.use_pandas:
             return self.__histplotPD(**kwargs)
         else:
-            return self.__histplot(**kwargs)
+            return super(AwesomePlot, self).add_hist(**kwargs)
 
     def add_networkplot(self, **kwargs):
         if self.use_pandas:
             return self.__networkplotPD(**kwargs)
         else:
-            return self.__networkplot(**kwargs)
-
-    def save(self, fnames):
-        assert len(fnames) == len(self.figures)
-        for i, fig in enumerate(self.figures):
-            fig.savefig(filename=fnames[i] + '.' + self.params['savefig.format'], bbox_inches='tight')
-            fig.clear()
-
-    def show(self):
-        pyplot.show()
+            return super(AwesomePlot, self).add_network(**kwargs)
 
     def show_params(self):
         for k in matplotlib.rcParams.keys():
@@ -266,35 +260,6 @@ class AwesomePlot(object):
         assert all([key in matplotlib.rcParams.keys() for key in dic.keys()])
         matplotlib.rcParams.update(dic)
 
-    def portrait(self):
-        canvas = self.params['figure.figsize']
-        if canvas[1] > canvas[0]:
-            raise Warning("Figure is already in portrait orientation.")
-        else:
-            self.params['figure.figsize'] = canvas[::-1]
-
-    def set_default_colours(self, cmap_name):
-        self.dfcmp = pyplot.get_cmap(cmap_name)
-        self.update_params(
-            {
-                'axes.prop_cycle': cycler('color', list(self.dfcmp.colors)) + \
-                    cycler('linestyle', self.linestyles[:self.dfcmp.N]),
-                'image.cmap': self.dfcmp.name
-            }
-        )
-        #TODO color cycler with selected colours
-
-    def set_log(self, fig, log="y"):
-        assert fig in self.figures
-        if log == "y":
-            fig.axes[0].set_yscale('symlog')
-        elif log == "x":
-            fig.axes[0].set_xscale('symlog')
-        elif log == "xy":
-            fig.axes[0].set_xscale('symlog')
-            fig.axes[0].set_yscale('symlog')
-        else:
-            raise ValueError("Invalid input. Must be x, y, or xy.")
 
 
     ###############################################################################
@@ -366,11 +331,13 @@ class AwesomePlot(object):
 
         self.figures.append(fig)
 
+        return fig
+
     def __lineplotPD(self):
         print 42
         pass
 
-    def __distplot(self, x, y, labels=['x', 'y'], linestyle='-', filled=True, text=True):
+    def __distplot(self, x="x", y="y", labels=['x', 'y'], linestyle='-', filled=True, text=True):
 
         assert len(labels) == 2
 
@@ -420,6 +387,8 @@ class AwesomePlot(object):
 
         self.figures.append(fig)
 
+        return fig
+
     def __distplotPD(self):
         pass
 
@@ -459,6 +428,8 @@ class AwesomePlot(object):
         fig.colorbar(c, label=labels[2], format=r"%.1f")
 
         self.figures.append(fig)
+
+        return fig
 
     def __contourplotPD(self):
         pass
@@ -563,9 +534,11 @@ class AwesomePlot(object):
         if squared:
             matplotlib.rcParams['figure.figsize'] = backup
 
-    def __scatterplotPD(self, data=None, bins=20, kind="kde"):
+        return fig
 
-        assert isinstance(x, y, data, pandas.DataFrame)
+    def __scatterplotPD(self, x, y, data=None, bins=20, kind="kde"):
+
+        assert isinstance(data, pandas.DataFrame)
 
         ymin = np.min(data.values)
         ymax = np.max(data.values)
@@ -585,6 +558,8 @@ class AwesomePlot(object):
                                  )
 
         self.figures.append(fig)
+
+        return fig
 
     def __histplot(self, data, label='x', nbins=20):
 
@@ -622,6 +597,8 @@ class AwesomePlot(object):
         ax.yaxis.grid(color='w', linestyle='-', zorder=2)
 
         self.figures.append(fig)
+
+        return fig
 
     def __histplotPD(self):
         pass
@@ -740,6 +717,8 @@ class AwesomePlot(object):
 
         self.figures.append(fig)
 
+        return fig
+
     def __networkplotPD(self):
         pass
 
@@ -761,7 +740,7 @@ def test_case():
 
     #p.add_histplot(data=zip(*u))
 
-    #p.add_lineplot(x=x, lines={"y": y})
+    p.add_lineplot(x=x, lines={"y": y})
 
     #p.add_scatterplot(x={0: x}, y={0: y})
 
@@ -802,7 +781,7 @@ def test_case():
 
     p.use_pandas = True
 
-    p.add_scatterplot(data=df, kind="scatter")
+    p.add_scatterplot(x="y4", y="y", data=df, kind="scatter")
 
     p.show()
 
