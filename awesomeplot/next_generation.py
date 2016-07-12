@@ -244,6 +244,7 @@ class AwesomePlot(object):
         assert len(fnames) == len(self.figures)
         for i, fig in enumerate(self.figures):
             fig.savefig(filename=fnames[i] + '.' + self.params['savefig.format'], bbox_inches='tight')
+            fig.clear()
 
     def show(self):
         pyplot.show()
@@ -562,34 +563,25 @@ class AwesomePlot(object):
         if squared:
             matplotlib.rcParams['figure.figsize'] = backup
 
-    def __scatterplotPD(self, x={}, y={}, labels=['x', 'y'], bins=20, squared=False):
+    def __scatterplotPD(self, data=None, bins=20, kind="kde"):
 
-        if isinstance(x, dict):
-            assert sorted(x.keys()) == sorted(y.keys())
-            assert len(x.keys()) <= self.dfcmp.N
-            # determine boundaries
-            xmin = np.min([np.min(l) for l in x.itervalues()])
-            xmax = np.max([np.max(l) for l in x.itervalues()])
-            ymin = np.min([np.min(l) for l in y.itervalues()])
-            ymax = np.max([np.max(l) for l in y.itervalues()])
-        else:
-            # determine boundaries
-            xmin = x.min()
-            xmax = x.max()
-            ymin = y.min()
-            ymax = y.max()
+        assert isinstance(x, y, data, pandas.DataFrame)
 
-        xmargin = binwidthx = 1. * (xmax - xmin) / bins
-        ymargin = binwidthy = 1. * (ymax - ymin) / bins
+        ymin = np.min(data.values)
+        ymax = np.max(data.values)
+        xmin = np.min(data.index.values)
+        xmax = np.max(data.index.values)
 
         fig, ax = pyplot.subplots(nrows=1, ncols=1)
 
-        grid = seaborn.jointplot(x[0], y[0],
-                                 kind="reg",
-                                 marginal_kws=dict(bins=bins, rug=True),
-                                 annot_kws=dict(stat="r", loc='best'),
-                                 xlim=(xmin, xmax),
-                                 ylim=(ymin, ymax)
+        grid = seaborn.jointplot(x=x,
+                                 y=y,
+                                 data=data,
+                                 kind=kind,
+                                 #marginal_kws=dict(bins=bins, rug=True),
+                                 annot_kws=dict(stat="r", loc='best', frameon=True),
+                                 #xlim=(xmin, xmax),
+                                 #ylim=(ymin, ymax)
                                  )
 
         self.figures.append(fig)
@@ -789,12 +781,13 @@ def test_case():
     #                   height=True,
     #                   sym=False)
 
-    df = pandas.DataFrame(data={"y": np.linspace(0, 10, 10) ** 2,
+    df = pandas.DataFrame(data={"x":np.linspace(0, 10, 10),
+                                "y": np.linspace(0, 10, 10) ** 2,
                                 "y2": np.linspace(0, 10, 10) ** 3,
                                 "y3": np.linspace(0, 10, 10) ** 2.1,
                                 "y4": np.linspace(0, 10, 10) ** 2.3,
                                 "y5": np.linspace(0, 10, 10) ** 2.5},
-                          index=np.linspace(0, 10, 10))
+                          )
 
     df.plot(kind="line",
             use_index=True,
@@ -809,7 +802,7 @@ def test_case():
 
     p.use_pandas = True
 
-    p.add_scatterplot(x={0: x**2}, y={0: y})
+    p.add_scatterplot(data=df, kind="scatter")
 
     p.show()
 

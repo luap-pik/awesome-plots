@@ -621,9 +621,20 @@ class AwesomePlot(object):
         assert len(fnames) == len(self.figures)
         for i, fig in enumerate(self.figures):
             fig.savefig(filename=fnames[i] + '.' + self.params['savefig.format'], bbox_inches='tight')
+            self.clear(fig)
+
+
+    def clear(self, fig):
+        assert isinstance(fig, pyplot.Figure)
+        pyplot.close(fig)
+        self.figures.remove(fig)
+
 
     def show(self):
-        pyplot.show()
+        if len(self.figures) > 0:
+            pyplot.show()
+        else:
+            raise ValueError("No open figures to plot.")
 
     def show_params(self):
         for k in matplotlib.rcParams.keys():
@@ -684,11 +695,12 @@ if __name__ == "__main__":
     #p.add_contour(x, x, z, sym=True)
 
     import networkx as nx
-    A = nx.to_scipy_sparse_matrix(nx.erdos_renyi_graph(100, 0.01), format="dok")
+    A = nx.to_scipy_sparse_matrix(nx.erdos_renyi_graph(10, 0.01), format="dok")
 
-    p.__network(A, styles={"vertex_color": np.random.random(100)}, height=False)
+    for i in range(21):
+        p.add_network(A, styles={"vertex_color": np.random.random(10)}, height=False)
 
-    # p.save(["test"])
+        p.save(["test/test"+str(i),])
 
     p.show()
 
