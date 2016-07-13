@@ -6,7 +6,7 @@ __date__ = "Jul 07, 2016"
 __version__ = "v1.2"
 
 """
-Module contains class AwesomePlot.
+Module contains class Plot.
 
 Derivative of the matplotlib module. The aim is to create
 visually attractive, unambigous and colour-blind-friendly
@@ -33,7 +33,7 @@ import seaborn
 
 class AwesomePlot(object):
     """
-    AwesomePlot class.
+    Plot class.
 
     The class is consistently sets reasonable matplotlib rc parameters for three different use cases.
     It can be instantiated either to create images for
@@ -79,7 +79,7 @@ class AwesomePlot(object):
 
     def __init__(self, output='paper', rc_spec=None, font_scale=2):
         """
-            Initialise an instance of AwesomePlot.
+            Initialise an instance of Plot.
 
             Parameters
             ----------
@@ -105,16 +105,16 @@ class AwesomePlot(object):
     @classmethod
     def paper(cls):
         """
-        Class method yielding an AwesomePlot instance of type "paper"
+        Class method yielding an Plot instance of type "paper"
 
         Parameters
         ----------
         cls: object
-            AwesomePlot class
+            Plot class
 
         Returns
         -------
-        instance of class AwesomePlot
+        instance of class Plot
 
         """
 
@@ -130,16 +130,16 @@ class AwesomePlot(object):
     @classmethod
     def talk(cls):
         """
-        Class method yielding an AwesomePlot instance of type "talk"
+        Class method yielding an Plot instance of type "talk"
 
         Parameters
         ----------
         cls: object
-            AwesomePlot class
+            Plot class
 
         Returns
         -------
-        instance of class AwesomePlot
+        instance of class Plot
 
         """
         rc = dict()
@@ -152,16 +152,16 @@ class AwesomePlot(object):
     @classmethod
     def poster(cls):
         """
-        Class method yielding an AwesomePlot instance of type "icon"
+        Class method yielding an Plot instance of type "icon"
 
         Parameters
         ----------
         cls: object
-            AwesomePlot class
+            Plot class
 
         Returns
         -------
-        instance of class AwesomePlot
+        instance of class Plot
 
         """
         return cls(output='poster')
@@ -169,16 +169,16 @@ class AwesomePlot(object):
     @classmethod
     def notebook(cls):
         """
-        Class method yielding an AwesomePlot instance of type "paper"
+        Class method yielding an Plot instance of type "paper"
 
         Parameters
         ----------
         cls: object
-            AwesomePlot class
+            Plot class
 
         Returns
         -------
-        instance of class AwesomePlot
+        instance of class Plot
 
         """
         return cls(output='notebook')

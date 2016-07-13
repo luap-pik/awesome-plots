@@ -6,7 +6,7 @@ __date__ = "May 23, 2016"
 __version__ = "v0.2"
 
 """
-Module contains class AwesomePlot.
+Module contains class Plot.
 
 Derivative of the matplotlib module. The aim is to create
 visually attractive, unambigous and colour-blind-friendly
@@ -32,7 +32,7 @@ from matplotlib.colors import ListedColormap, LinearSegmentedColormap, hex2color
 
 class AwesomePlot(object):
     """
-    AwesomePlot class.
+    Plot class.
 
     The class is consistently sets reasonable matplotlib rc parameters for three different use cases.
     It can be instantiated either to create images for
@@ -80,7 +80,7 @@ class AwesomePlot(object):
 
     def __init__(self, output='paper'):
         """
-            Initialise an instance of AwesomePlot.
+            Initialise an instance of Plot.
 
             Parameters
             ----------
@@ -164,16 +164,16 @@ class AwesomePlot(object):
     @classmethod
     def paper(cls):
         """
-        Class method yielding an AwesomePlot instance of type "paper"
+        Class method yielding an Plot instance of type "paper"
 
         Parameters
         ----------
         cls: object
-            AwesomePlot class
+            Plot class
 
         Returns
         -------
-        instance of class AwesomePlot
+        instance of class Plot
 
         """
         return cls(output='paper')
@@ -181,16 +181,16 @@ class AwesomePlot(object):
     @classmethod
     def talk(cls):
         """
-        Class method yielding an AwesomePlot instance of type "talk"
+        Class method yielding an Plot instance of type "talk"
 
         Parameters
         ----------
         cls: object
-            AwesomePlot class
+            Plot class
 
         Returns
         -------
-        instance of class AwesomePlot
+        instance of class Plot
 
         """
         return cls(output='talk')
@@ -198,16 +198,16 @@ class AwesomePlot(object):
     @classmethod
     def icon(cls):
         """
-        Class method yielding an AwesomePlot instance of type "icon"
+        Class method yielding an Plot instance of type "icon"
 
         Parameters
         ----------
         cls: object
-            AwesomePlot class
+            Plot class
 
         Returns
         -------
-        instance of class AwesomePlot
+        instance of class Plot
 
         """
         return cls(output='icon')
@@ -221,7 +221,7 @@ class AwesomePlot(object):
         Plots (multiple) lines with optional shading.
 
         This function adds a matplotlib figure object to the figure collection of
-        an AwesomePlot instance.
+        an Plot instance.
 
         Parameters
         ----------

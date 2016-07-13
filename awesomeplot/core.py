@@ -6,7 +6,7 @@ __date__ = "May 23, 2016"
 __version__ = "v0.3"
 
 """
-Module contains class AwesomePlot.
+Module contains class Plot.
 
 Derivative of the matplotlib module. The aim is to create
 visually attractive, unambigous and colour-blind-friendly
@@ -30,9 +30,12 @@ from matplotlib import cycler
 from matplotlib.cm import register_cmap
 from matplotlib.colors import ListedColormap, LinearSegmentedColormap, hex2color
 
-class AwesomePlot(object):
+# import seaborn for fancy style templates
+import seaborn
+
+class Plot(object):
     """
-    AwesomePlot class.
+    Plot class.
 
     The class is consistently sets reasonable matplotlib rc parameters for three different use cases.
     It can be instantiated either to create images for
@@ -80,7 +83,7 @@ class AwesomePlot(object):
 
     def __init__(self, output='paper'):
         """
-            Initialise an instance of AwesomePlot.
+            Initialise an instance of Plot.
 
             Parameters
             ----------
@@ -164,16 +167,16 @@ class AwesomePlot(object):
     @classmethod
     def paper(cls):
         """
-        Class method yielding an AwesomePlot instance of type "paper"
+        Class method yielding an Plot instance of type "paper"
 
         Parameters
         ----------
         cls: object
-            AwesomePlot class
+            Plot class
 
         Returns
         -------
-        instance of class AwesomePlot
+        instance of class Plot
 
         """
         return cls(output='paper')
@@ -181,16 +184,16 @@ class AwesomePlot(object):
     @classmethod
     def talk(cls):
         """
-        Class method yielding an AwesomePlot instance of type "talk"
+        Class method yielding an Plot instance of type "talk"
 
         Parameters
         ----------
         cls: object
-            AwesomePlot class
+            Plot class
 
         Returns
         -------
-        instance of class AwesomePlot
+        instance of class Plot
 
         """
         return cls(output='talk')
@@ -198,16 +201,16 @@ class AwesomePlot(object):
     @classmethod
     def icon(cls):
         """
-        Class method yielding an AwesomePlot instance of type "icon"
+        Class method yielding an Plot instance of type "icon"
 
         Parameters
         ----------
         cls: object
-            AwesomePlot class
+            Plot class
 
         Returns
         -------
-        instance of class AwesomePlot
+        instance of class Plot
 
         """
         return cls(output='icon')
@@ -221,7 +224,7 @@ class AwesomePlot(object):
         Plots (multiple) lines with optional shading.
 
         This function adds a matplotlib figure object to the figure collection of
-        an AwesomePlot instance.
+        an Plot instance.
 
         Parameters
         ----------
@@ -261,6 +264,8 @@ class AwesomePlot(object):
         xmargin = (xmax - xmin) / 200.
         ymargin = (ymax - ymin) / 200.
 
+        scale = np.log(1 + 1. * (xmax - xmin) / len(x))
+
         fig, ax = pyplot.subplots(nrows=1, ncols=1)
 
         ax.axis([xmin - xmargin, xmax + xmargin, ymin - ymargin, ymax + ymargin])
@@ -270,9 +275,9 @@ class AwesomePlot(object):
             if shades:
                 shade = ax.fill_between(x, shades[i][0], shades[i][1], alpha=0.3, edgecolor='none',
                                         facecolor=hex2color('#8E908F'))
-                ax.plot(x, lines[i], marker='o', mew='3', mec=shade._facecolors[0])#, ms=12)
+                ax.plot(x, lines[i], marker='o', mew=3.*scale, mec=shade._facecolors[0], ms=10.*scale)
             else:
-                ax.plot(x, lines[i], marker='o', mec='w', mew='3')#, ms=10)
+                ax.plot(x, lines[i], marker='o', mec='w', mew=3*scale, ms=10.*scale)
         ax.set_xlabel(labels[0])
         ax.set_ylabel(labels[1])
         fig.tight_layout()
@@ -449,10 +454,10 @@ class AwesomePlot(object):
         # axes
         a, b = axHistx.get_xaxis().get_view_interval()
         c, d = axHistx.get_yaxis().get_view_interval()
-        axHistx.add_artist(pyplot.Line2D((b, b), (c, d), color='k', linewidth=2*self.params['axes.linewidth']))
+        axHistx.add_artist(pyplot.Line2D((b, b), (c, d), color='k', linewidth=2 * seaborn.axes_style()['axes.linewidth']))
         a, b = axHisty.get_xaxis().get_view_interval()
         c, d = axHisty.get_yaxis().get_view_interval()
-        axHisty.add_artist(pyplot.Line2D((a, b), (d, d), color='k', linewidth=2*self.params['axes.linewidth']))
+        axHisty.add_artist(pyplot.Line2D((a, b), (d, d), color='k', linewidth=2 * seaborn.axes_style()['axes.linewidth']))
 
         # ticks
         axScatter.get_xaxis().tick_bottom()
@@ -463,8 +468,8 @@ class AwesomePlot(object):
         axHisty.get_yaxis().tick_left()
         axHistx.set_yticks(np.linspace(0, Xmax, 3, endpoint=True)[1:])
         axHisty.set_xticks(np.linspace(0, Ymax, 3, endpoint=True)[1:])
-        axHistx.tick_params(labelsize=.6*self.textsize)
-        axHisty.tick_params(labelsize=.6*self.textsize)
+        #axHistx.tick_params(labelsize=.6 * self.textsize)
+        #axHisty.tick_params(labelsize=.6 * self.textsize)
         for tl in axHistx.get_xticklabels() + axHisty.get_yticklabels():
             tl.set_visible(False)
 
@@ -544,7 +549,7 @@ class AwesomePlot(object):
 
         visual_style = dict(
             edge_color=np.repeat('#8e908f', len(edgelist)),
-            edge_width=self.params["axes.linewidth"],
+            edge_width=seaborn.axes_style()["axes.linewidth"],
             vertex_size=100,
             vertex_label=range(N)
         )
@@ -611,12 +616,13 @@ class AwesomePlot(object):
                                edgecolor='w',
                                zorder=2)
             cb = fig.colorbar(nodes, orientation='horizontal', shrink=0.66, format=r"%.1f")
-            [t.set_fontsize(self.params["legend.fontsize"]) for t in cb.ax.get_xticklabels()]
+            # deprecated
+            # [t.set_fontsize(seaborn.axes_style()["legend.fontsize"]) for t in cb.ax.get_xticklabels()]
 
         if labels:
             for i in xrange(N):
                 pyplot.annotate(str(i), xy=(x[i], y[i]), xytext=(3, 3), textcoords='offset points',
-                                size=0.5*self.params["font.size"],
+                                size=0.5 * self.params["font.size"],
                                 horizontalalignment='left', verticalalignment='bottom')
 
         if axis_labels:
@@ -700,7 +706,7 @@ class AwesomePlot(object):
             raise ValueError("Invalid input. Must be x, y, or xy.")
 
 if __name__ == "__main__":
-    p = AwesomePlot.paper()
+    p = Plot.paper()
 
     #p.show_cmap(p.dfcmp.name)
 
