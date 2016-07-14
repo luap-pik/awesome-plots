@@ -378,12 +378,8 @@ class Plot(object):
         return fig
 
 
-    def add_scatterplot(self, x={}, y={}, labels=['x', 'y'], bins=20, squared=False):
+    def add_scatterplot(self, x, y, labels=['x', 'y'], bins=20, kind="scatter", kdeplot=True):
         assert len(labels) == 2
-
-        if squared:
-            backup = matplotlib.rcParams['figure.figsize']
-            matplotlib.rcParams['figure.figsize'] = (11.69, 11.69)
 
         if isinstance(x, dict):
             assert sorted(x.keys()) == sorted(y.keys())
@@ -400,85 +396,38 @@ class Plot(object):
             ymin = y.min()
             ymax = y.max()
 
-        xmargin = binwidthx = 1. * (xmax - xmin) / bins
-        ymargin = binwidthy = 1. * (ymax - ymin) / bins
-
-        fig = pyplot.figure()
-
-        pyplot.ylabel(labels[0])
-        pyplot.xlabel(labels[1])
-
-        gs = matplotlib.gridspec.GridSpec(5, 5,
-                                          wspace=0.0,
-                                          hspace=0.0
-                                          )
-
-        axScatter = pyplot.subplot(gs[1:, :4])
-        axHistx = pyplot.subplot(gs[0, :4], sharex=axScatter, frameon=False)
-        axHisty = pyplot.subplot(gs[1:, 4], sharey=axScatter, frameon=False)
-
-        # the scatter plot:
-        axScatter.set_xlim((xmin - xmargin, xmax + xmargin))
-        axScatter.set_ylim((ymin - ymargin, ymax + ymargin))
-        axScatter.plot(np.linspace(xmin, xmax, 1000), np.linspace(ymin, ymax, 1000), ':k')
-        if isinstance(x, dict):
-            axScatter.set_prop_cycle(matplotlib.cycler('marker', ['o', '<', 'd', 's', 'v', 'p', '>', '8', '*', '^']) +
-                                     matplotlib.cycler('mfc', list(self.discrete_colours.colors)))
-            for k in x.keys():
-                axScatter.plot(x[k], y[k], lw=0., alpha=.25)
+        # adjust colors
+        if kdeplot:
+            color = self.pik_colours.colors[-1]
         else:
-            axScatter.plot(x, y, 'o', lw=0., alpha=.25)
-        axScatter.set_xlabel(labels[0])
-        axScatter.set_ylabel(labels[1])
+            color = self.pik_colours.colors[0]
 
-        # histograms
-        if isinstance(x, dict):
-            X = [item for sublist in x.values() for item in sublist]
-            Y = [item for sublist in y.values() for item in sublist]
-        else:
-            X = x
-            Y = y
-        binsx = np.arange(xmin - binwidthx, xmax + binwidthx, binwidthx)
-        binsy = np.arange(ymin - binwidthy, ymax + binwidthy, binwidthy)
-        wx = np.ones_like(X) / float(len(X))
-        wy = np.ones_like(Y) / float(len(Y))
-        vx, _, _ = axHistx.hist(X, bins=binsx, weights=wx,
-                                facecolor=self.dfcmp.colors[0], alpha=0.75)
-        Xmax = np.ceil(vx.max() * 10.) / 10.
-        axHistx.axis([xmin - xmargin, xmax + xmargin, 0., Xmax])
-        vy, _, _ = axHisty.hist(Y, bins=binsy, weights=wy, orientation='horizontal',
-                                facecolor=self.dfcmp.colors[0], alpha=0.75)
-        Ymax = np.ceil(vy.max() * 10.) / 10.
-        axHisty.axis([0., Ymax, ymin - ymargin, ymax + ymargin])
+        settings = {
+            "joint_kws": dict(alpha=0.5),
+            "marginal_kws": dict(bins=bins, rug=False),
+            "annot_kws": dict(stat=r"r", frameon=True, loc="best", handlelength=0),
+            "kind": kind,
+            "color": color,
+            "xlim": (xmin, xmax),
+            "ylim": (ymin, ymax)
+        }
 
-        # axes
-        a, b = axHistx.get_xaxis().get_view_interval()
-        c, d = axHistx.get_yaxis().get_view_interval()
-        axHistx.add_artist(pyplot.Line2D((b, b), (c, d), color='k', linewidth=2 * seaborn.axes_style()['axes.linewidth']))
-        a, b = axHisty.get_xaxis().get_view_interval()
-        c, d = axHisty.get_yaxis().get_view_interval()
-        axHisty.add_artist(pyplot.Line2D((a, b), (d, d), color='k', linewidth=2 * seaborn.axes_style()['axes.linewidth']))
+        scatter = seaborn.jointplot(
+            x,
+            y,
+            **settings
+        )
 
-        # ticks
-        axScatter.get_xaxis().tick_bottom()
-        axScatter.get_yaxis().tick_left()
-        axHistx.get_xaxis().tick_bottom()
-        axHistx.get_yaxis().tick_right()
-        axHisty.get_xaxis().tick_top()
-        axHisty.get_yaxis().tick_left()
-        axHistx.set_yticks(np.linspace(0, Xmax, 3, endpoint=True)[1:])
-        axHisty.set_xticks(np.linspace(0, Ymax, 3, endpoint=True)[1:])
-        #axHistx.tick_params(labelsize=.6 * self.textsize)
-        #axHisty.tick_params(labelsize=.6 * self.textsize)
-        for tl in axHistx.get_xticklabels() + axHisty.get_yticklabels():
-            tl.set_visible(False)
+        scatter.plot_joint(seaborn.jointplot, **settings)
 
-        self.figures.append(fig)
+        if kdeplot:
+            scatter.plot_joint(seaborn.kdeplot, shade=True, cut=5, zorder=0, n_levels=6, cmap=self.lin_colours)
 
-        if squared:
-            matplotlib.rcParams['figure.figsize'] = backup
+        scatter.set_axis_labels(*labels)
 
-        return fig
+        self.figures.append(scatter.fig)
+
+        return scatter.fig
 
     def add_hist(self, data, label='x', nbins=20):
 

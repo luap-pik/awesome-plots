@@ -171,41 +171,41 @@ class AwesomePlot(Plot):
     # ##                       PUBLIC FUNCTIONS                                ## #
     ###############################################################################
 
-    def add_lineplot(self, **kwargs):
+    def add_lineplot(self, *args, **kwargs):
         if self.use_pandas:
-            return self.__lineplotPD(**kwargs)
+            return self.__lineplotPD(*args, **kwargs)
         else:
-            return super(AwesomePlot, self).add_lineplot(**kwargs)
+            return super(AwesomePlot, self).add_lineplot(*args, **kwargs)
 
-    def add_distplot(self, **kwargs):
+    def add_distplot(self, *args, **kwargs):
         if self.use_pandas:
-            return self.__distplotPD(**kwargs)
+            return self.__distplotPD(*args, **kwargs)
         else:
-            return super(AwesomePlot, self).add_distplot(**kwargs)
+            return super(AwesomePlot, self).add_distplot(*args, **kwargs)
 
-    def add_contour(self, **kwargs):
+    def add_contour(self, *args, **kwargs):
         if self.use_pandas:
-            return self.__contourplotPD(**kwargs)
+            return self.__contourplotPD(*args, **kwargs)
         else:
-            return super(AwesomePlot, self).add_contour(**kwargs)
+            return super(AwesomePlot, self).add_contour(*args, **kwargs)
 
-    def add_scatterplot(self, **kwargs):
+    def add_scatterplot(self, *args, **kwargs):
         if self.use_pandas:
-            return self.__scatterplotPD(**kwargs)
+            return self.__scatterplotPD(*args, **kwargs)
         else:
-            return super(AwesomePlot, self).add_scatterplot(**kwargs)
+            return super(AwesomePlot, self).add_scatterplot(*args, **kwargs)
 
-    def add_hist(self, **kwargs):
+    def add_hist(self, *args, **kwargs):
         if self.use_pandas:
-            return self.__histplotPD(**kwargs)
+            return self.__histplotPD(*args, **kwargs)
         else:
-            return super(AwesomePlot, self).add_hist(**kwargs)
+            return super(AwesomePlot, self).add_hist(*args, **kwargs)
 
-    def add_network(self, **kwargs):
+    def add_network(self, *args, **kwargs):
         if self.use_pandas:
-            return self.__networkplotPD(**kwargs)
+            return self.__networkplotPD(*args, **kwargs)
         else:
-            return super(AwesomePlot, self).add_network(**kwargs)
+            return super(AwesomePlot, self).add_network(*args, **kwargs)
 
     def save(self, fnames):
         assert len(fnames) == len(self.figures)
@@ -268,8 +268,20 @@ class AwesomePlot(Plot):
     ###############################################################################
 
 
-    def __lineplotPD(self):
-        print 42
+    def __lineplotPD(self, df):
+        assert isinstance(df, pandas.DataFrame)
+
+        df.plot(kind="line",
+                use_index=True,
+                marker='o',
+                mew='3',
+                mec='w',
+                colormap="discrete",
+                grid=True)
+        # title=title,
+        # legend=None,
+        # ax=axes)
+
         pass
 
     def __distplotPD(self):
@@ -278,7 +290,8 @@ class AwesomePlot(Plot):
     def __contourplotPD(self):
         pass
 
-    def __scatterplotPD(self):
+    def __scatterplotPD(self, df):
+
         pass
 
     def __histplotPD(self):
@@ -295,7 +308,7 @@ def test_case():
 
     labels = [r'$\phi$']
 
-    n = 20
+    n = 1000
 
     x = np.arange(n)
     y = np.sin(x)
@@ -303,15 +316,29 @@ def test_case():
 
     u = np.random.random([n, 3])
 
+    df = pandas.DataFrame(data={"y": np.linspace(0, 10, 10) ** 2,
+                                "y2": np.linspace(0, 10, 10) ** 3,
+                                "y3": np.linspace(0, 10, 10) ** 2.1,
+                                "y4": np.linspace(0, 10, 10) ** 2.3,
+                                "y5": np.linspace(0, 10, 10) ** 2.5},
+                          index=np.linspace(0, 10, 10))
+
+    p.add_scatterplot(u[:, 0], u[:, 1]**2, kdeplot=False)
+
+
+    p.show()
+    quit()
+
+
     p.add_hist(data=zip(*u))
 
     p.add_lineplot(x=x, lines={"y": y})
 
-    p.add_scatterplot(x={0: x}, y={0: y})
-
     p.add_distplot(x=x, y=z)
 
     p.add_contour(x=x, y=x, z=z)
+
+
 
     import networkx as nx
     G = nx.erdos_renyi_graph(n, 0.1)
@@ -325,23 +352,7 @@ def test_case():
                   height=True,
                   sym=False)
 
-    df = pandas.DataFrame(data={"y": np.linspace(0, 10, 10) ** 2,
-                                "y2": np.linspace(0, 10, 10) ** 3,
-                                "y3": np.linspace(0, 10, 10) ** 2.1,
-                                "y4": np.linspace(0, 10, 10) ** 2.3,
-                                "y5": np.linspace(0, 10, 10) ** 2.5},
-                          index=np.linspace(0, 10, 10))
 
-    df.plot(kind="line",
-            use_index=True,
-            marker='o',
-            mew='3',
-            mec='w',
-            colormap="discrete",
-            grid=True)
-            #title=title,
-            # legend=None,
-            #ax=axes)
 
     p.show()
 
