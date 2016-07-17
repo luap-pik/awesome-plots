@@ -262,11 +262,12 @@ class Plot(object):
             if shades:
                 shade = ax.fill_between(x, shades[i][0], shades[i][1], alpha=0.3, edgecolor='none',
                                         facecolor=hex2color('#8E908F'))
-                ax.plot(x, lines[i], marker='o', mew=3.*scale, mec=shade._facecolors[0], ms=10.*scale)
+                ax.plot(x, lines[i], marker='o', mew=3.*scale, mec=shade._facecolors[0], ms=10.*scale, label=i)
             else:
-                ax.plot(x, lines[i], marker='o', mec='w', mew=3*scale, ms=10.*scale)
+                ax.plot(x, lines[i], marker='o', mec='w', mew=3*scale, ms=10.*scale, label=i)
         ax.set_xlabel(labels[0])
         ax.set_ylabel(labels[1])
+        pyplot.legend(frameon=True)
         fig.tight_layout()
 
         self.figures.append(fig)
