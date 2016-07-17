@@ -3,7 +3,7 @@
 
 __author__ = "Paul Schultz"
 __date__ = "Jul 07, 2016"
-__version__ = "v1.2"
+__version__ = "v2.0"
 
 """
 Module contains class Plot.
@@ -52,120 +52,11 @@ class AwesomePlot(Plot):
     Images are landscape per default.
     """
 
-
     def __init__(self, output='paper', rc_spec={}, font_scale=1.1, use_pandas=False):
-        """
-            Initialise an instance of Plot.
-
-            Parameters
-            ----------
-            output: string
-                can be either "paper", "talk" or "icon"
-
-            """
-
-        assert output in ["paper", "talk", "poster", "notebook"]
-
-        self.set_default_colours('pik')
-
-        rc = {'xtick.direction': 'in',
-              'ytick.direction': 'in',
-              'verbose.level': 'helpful',
-              'lines.linewidth': 3,
-              'axes.linewidth': 3
-              }
-
-        if rc:
-            rc.update(rc_spec)
-
-        seaborn.set_context(output, font_scale=font_scale, rc=rc)
-        seaborn.set_style(style="white", rc=rc)
-
-        # default behaviour
+        super(AwesomePlot, self).__init__(output, rc_spec, font_scale)
         self.use_pandas = use_pandas
+        seaborn.set_style(style="white", rc=self.rc)
 
-        self.figures = []
-
-    @classmethod
-    def paper(cls):
-        """
-        Class method yielding an Plot instance of type "paper"
-
-        Parameters
-        ----------
-        cls: object
-            Plot class
-
-        Returns
-        -------
-        instance of class Plot
-
-        """
-
-        rc = dict()
-        rc['figure.figsize'] = (11.69, 8.268)  # A4
-        rc['savefig.format'] = 'pdf'
-        rc['pdf.compression'] = 6  # 0 to 9
-        rc['pdf.fonttype'] = 42
-        rc['savefig.dpi'] = 300
-
-        return cls(output='paper', rc_spec=rc)
-
-    @classmethod
-    def talk(cls):
-        """
-        Class method yielding an Plot instance of type "talk"
-
-        Parameters
-        ----------
-        cls: object
-            Plot class
-
-        Returns
-        -------
-        instance of class Plot
-
-        """
-        rc = dict()
-        rc['figure.figsize'] = (8.268, 5.872)  # A5
-        rc['savefig.format'] = 'png'
-        rc['savefig.dpi'] = 300
-
-        return cls(output='talk', rc_spec=rc)
-
-    @classmethod
-    def poster(cls):
-        """
-        Class method yielding an Plot instance of type "icon"
-
-        Parameters
-        ----------
-        cls: object
-            Plot class
-
-        Returns
-        -------
-        instance of class Plot
-
-        """
-        return cls(output='poster')
-
-    @classmethod
-    def notebook(cls):
-        """
-        Class method yielding an Plot instance of type "paper"
-
-        Parameters
-        ----------
-        cls: object
-            Plot class
-
-        Returns
-        -------
-        instance of class Plot
-
-        """
-        return cls(output='notebook')
 
     ###############################################################################
     # ##                       PUBLIC FUNCTIONS                                ## #
@@ -176,18 +67,6 @@ class AwesomePlot(Plot):
             return self.__lineplotPD(*args, **kwargs)
         else:
             return super(AwesomePlot, self).add_lineplot(*args, **kwargs)
-
-    def add_distplot(self, *args, **kwargs):
-        if self.use_pandas:
-            return self.__distplotPD(*args, **kwargs)
-        else:
-            return super(AwesomePlot, self).add_distplot(*args, **kwargs)
-
-    def add_contour(self, *args, **kwargs):
-        if self.use_pandas:
-            return self.__contourplotPD(*args, **kwargs)
-        else:
-            return super(AwesomePlot, self).add_contour(*args, **kwargs)
 
     def add_scatterplot(self, *args, **kwargs):
         if self.use_pandas:
@@ -201,114 +80,122 @@ class AwesomePlot(Plot):
         else:
             return super(AwesomePlot, self).add_hist(*args, **kwargs)
 
-    def add_network(self, *args, **kwargs):
-        if self.use_pandas:
-            return self.__networkplotPD(*args, **kwargs)
-        else:
-            return super(AwesomePlot, self).add_network(*args, **kwargs)
-
-    def save(self, fnames):
-        assert len(fnames) == len(self.figures)
-        for i, fig in enumerate(self.figures):
-            fig.savefig(filename=fnames[i] + '.' + self.params['savefig.format'], bbox_inches='tight')
-
-    def show(self):
-        pyplot.show()
-
-    def show_params(self):
-        for k in matplotlib.rcParams.keys():
-            print k
-
-    def show_cmap(self, cmap_name):
-        assert isinstance(cmap_name, str)
-        a=np.outer(np.arange(0,1,0.01), np.ones(10))
-        pyplot.figure(figsize=(2,10))
-        pyplot.axis("off")
-        pyplot.imshow(a,aspect='auto',interpolation='nearest', cmap=pyplot.get_cmap(cmap_name))
-        pyplot.title(cmap_name,fontsize=15)
-        pyplot.show()
-
-    def update_params(self, dic):
-        assert all([key in matplotlib.rcParams.keys() for key in dic.keys()])
-        matplotlib.rcParams.update(dic)
-
-    def portrait(self):
-        canvas = self.params['figure.figsize']
-        if canvas[1] > canvas[0]:
-            raise Warning("Figure is already in portrait orientation.")
-        else:
-            self.params['figure.figsize'] = canvas[::-1]
-
-    def set_default_colours(self, cmap_name):
-        self.dfcmp = pyplot.get_cmap(cmap_name)
-        self.update_params(
-            {
-                'axes.prop_cycle': cycler('color', list(self.dfcmp.colors)) + \
-                    cycler('linestyle', self.linestyles[:self.dfcmp.N]),
-                'image.cmap': self.dfcmp.name
-            }
-        )
-        #TODO color cycler with selected colours
-
-    def set_log(self, fig, log="y"):
-        assert fig in self.figures
-        if log == "y":
-            fig.axes[0].set_yscale('symlog')
-        elif log == "x":
-            fig.axes[0].set_xscale('symlog')
-        elif log == "xy":
-            fig.axes[0].set_xscale('symlog')
-            fig.axes[0].set_yscale('symlog')
-        else:
-            raise ValueError("Invalid input. Must be x, y, or xy.")
-
-
     ###############################################################################
     # ##                      PRIVATE FUNCTIONS                                ## #
     ###############################################################################
 
 
-    def __lineplotPD(self, df):
+    def __lineplotPD(self, df, firstcol=False, legend=True, grid=True, logx=False, logy=False, loglog=False):
         assert isinstance(df, pandas.DataFrame)
 
-        df.plot(kind="line",
-                use_index=True,
-                marker='o',
-                mew='3',
-                mec='w',
-                colormap="discrete",
-                grid=True)
-        # title=title,
-        # legend=None,
-        # ax=axes)
+        # transfer x-values to dataframe index
+        if firstcol:
+            df.index = df[df.columns[0]]
+            df = df[df.columns[1:]]
 
-        pass
 
-    def __distplotPD(self):
-        pass
+        fig, ax = pyplot.subplots(nrows=1, ncols=1)
+        df.plot(
+            kind="line",
+            use_index=True,
+            marker='o',
+            mew=2,
+            mec='w',
+            colormap=self.dfcmp,
+            grid=grid,
+            legend=legend,
+            ax=ax,
+            loglog=loglog,
+            logx=logx,
+            logy=logy
+        )
 
-    def __contourplotPD(self):
-        pass
+        self.figures.append(fig)
 
-    def __scatterplotPD(self, df):
+        return fig
 
-        pass
+    def __scatterplotPD(self, df, x, y, factor=None, bins=20, kind="scatter", kdeplot=False, c_map="linear"):
+        assert isinstance(x, basestring)
+        assert isinstance(y, basestring)
 
-    def __histplotPD(self):
-        pass
+        if kdeplot:
+            c = "k"
+        else:
+            if factor is None:
+                c = self.pik_colours.colors[0]
+            else:
+                assert isinstance(factor, basestring)
+                c = df[factor]
 
-    def __networkplotPD(self):
-        pass
+        xmin = df[x].min()
+        xmax = df[x].max()
+        ymin = df[y].min()
+        ymax = df[y].max()
+
+        settings = {
+            "joint_kws": dict(alpha=1, c=c, cmap=pyplot.get_cmap(c_map)),
+            "marginal_kws": dict(bins=bins, rug=False),
+            "annot_kws": dict(stat=r"r", frameon=True, loc=0, handlelength=0),
+            "space": 0.1,
+            "kind": kind,
+            "xlim": (xmin, xmax),
+            "ylim": (ymin, ymax)
+        }
+
+        try:
+            scatter = seaborn.jointplot(x, y, data=df, **settings)
+        except:
+            # some kws are not valid in certain plot kinds
+            pyplot.close()
+            settings = {
+                "annot_kws": dict(stat=r"r", frameon=True, loc=0, handlelength=0),
+                "space": 0.1,
+                "kind": kind,
+                "xlim": (xmin, xmax),
+                "ylim": (ymin, ymax)
+            }
+            scatter = seaborn.jointplot(x, y, data=df, **settings)
+
+        if kdeplot:
+            scatter.plot_joint(seaborn.kdeplot, shade=True, cut=5, zorder=0, n_levels=6, cmap=pyplot.get_cmap(c_map))
+
+        fig = scatter.fig
+        pyplot.close() # close JointGrid object
+
+        self.figures.append(fig)
+
+        return fig
+
+    def __histplotPD(self, df, columns=None, normed=True, nbins=20, log=False, c_map="pik"):
+
+        if columns:
+            df = df[columns]
+
+
+        settings = {
+            "stacked": True,
+            #"alpha": 0.75,
+            "bins": nbins,
+            "normed": normed,
+            "log": log,
+            "cmap": c_map
+        }
+
+        fig, ax = pyplot.subplots(nrows=1, ncols=1)
+        df.plot.hist(ax=ax, **settings)
+
+        self.figures.append(fig)
+
+        return fig
+
 
 def test_case():
     p = AwesomePlot.talk()
     assert isinstance(p, AwesomePlot)
 
-    # p.show_cmap(p.dfcmp.name)
+    label = [r"$S_B$", "S"]
 
-    labels = [r'$\phi$']
-
-    n = 1000
+    n = 20
 
     x = np.arange(n)
     y = np.sin(x)
@@ -316,29 +203,15 @@ def test_case():
 
     u = np.random.random([n, 3])
 
-    df = pandas.DataFrame(data={"y": np.linspace(0, 10, 10) ** 2,
-                                "y2": np.linspace(0, 10, 10) ** 3,
-                                "y3": np.linspace(0, 10, 10) ** 2.1,
-                                "y4": np.linspace(0, 10, 10) ** 2.3,
-                                "y5": np.linspace(0, 10, 10) ** 2.5},
-                          index=np.linspace(0, 10, 10))
-
-    p.add_scatterplot(u[:, 0], u[:, 1]**2, kdeplot=False)
-
-
-    p.show()
-    quit()
-
-
-    p.add_hist(data=zip(*u))
-
-    p.add_lineplot(x=x, lines={"y": y})
-
     p.add_distplot(x=x, y=z)
 
-    p.add_contour(x=x, y=x, z=z)
+    p.add_contour(x=x, y=x, z=z, sym=True)
 
+    p.add_scatterplot(y, u[:, 1]**2, labels=label, kdeplot=True)
 
+    p.add_lineplot(x=x, lines={"y": y, "y2": -y**3,"y3": z[0], "y4": z[1]})
+
+    p.add_hist(data=zip(*u))
 
     import networkx as nx
     G = nx.erdos_renyi_graph(n, 0.1)
@@ -352,11 +225,45 @@ def test_case():
                   height=True,
                   sym=False)
 
+    p.show()
 
+    p.save(["test/o" + str(i) for i in range(len(p.figures))])
+
+def test_pandas():
+    p = AwesomePlot.talk()
+    assert isinstance(p, AwesomePlot)
+
+    p.use_pandas = True
+
+    p.set_default_colours("pik")
+
+    n = 200
+
+    x = np.arange(n)
+    y = np.sin(x)
+    z = 1 - 2. * np.random.random([n, n])
+
+    u = np.random.random([n, 3])
+
+    df = pandas.DataFrame(
+        data={"x": x, "y": y, "y2": -y**3,"y3": z[0], "y4": z[1]},
+        index=x
+    )
+
+    assert isinstance(df, pandas.DataFrame)
+
+    p.add_lineplot(df, firstcol=True)
+
+    p.add_scatterplot(df, "y", "y4", factor="x", c_map="discrete")
+
+    p.add_hist(df, c_map="discrete")
+
+    p.save(["test/p" + str(i) for i in range(len(p.figures))])
 
     p.show()
 
 if __name__ == "__main__":
     test_case()
+    test_pandas()
 
 

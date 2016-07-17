@@ -81,7 +81,7 @@ class Plot(object):
     # linestyle sequence for multiplots
     linestyles = np.tile(['-', '--', '-.', ':'], 1 + discrete_colours.N // 4)[:discrete_colours.N]
 
-    def __init__(self, output='paper'):
+    def __init__(self, output='paper', rc_spec={}, font_scale=1.1):
         """
             Initialise an instance of Plot.
 
@@ -92,75 +92,22 @@ class Plot(object):
 
             """
 
+        assert output in ["paper", "talk", "poster", "notebook"]
+
+        self.rc = {'xtick.direction': 'in',
+              'ytick.direction': 'in',
+              'verbose.level': 'helpful',
+              'lines.linewidth': 3,
+              'axes.linewidth': 3
+              }
+
+        if rc_spec:
+            self.rc.update(rc_spec)
+
+        seaborn.set_context(output, font_scale=font_scale, rc=self.rc)
+        seaborn.set_style(style="white", rc=self.rc)
+
         self.set_default_colours('pik')
-
-        # base parameters
-        self.params = {}
-
-        if output == 'paper':
-            self.textsize = 40
-            self.params['figure.figsize'] = (11.69, 8.268) # A4
-            self.params['savefig.format'] = 'pdf'
-            self.params['pdf.compression'] = 6  # 0 to 9
-            self.params['pdf.fonttype'] = 42
-            self.params['savefig.dpi'] = 300
-        elif output == 'talk':
-            self.textsize = 20
-            self.params['figure.figsize'] = (8.268, 5.872) # A5
-            self.params['savefig.format'] = 'png'
-            self.params['savefig.dpi'] = 300
-        elif output == 'icon':
-            raise NotImplementedError('Simplified plots as icons for talks not implemented yet.')
-        else:
-            raise ValueError('Invalid image format. Either paper or talk!')
-
-        common_params = {'xtick.labelsize': .9 * self.textsize,
-                         'ytick.labelsize': .9 * self.textsize,
-                         'xtick.major.size': 5,  # major tick size in points
-                         'xtick.minor.size': 2,  # minor tick size in points
-                         'ytick.major.size': 5,  # major tick size in points
-                         'ytick.minor.size': 2,  # minor tick size in points
-                         'xtick.major.width': 2,  # major tick size in points
-                         'xtick.minor.width': .5,  # minor tick size in points
-                         'ytick.major.width': 2,  # major tick size in points
-                         'ytick.minor.width': .5,  # minor tick size in points
-                         'xtick.major.pad': 8,  # distance to major tick label in points
-                         'xtick.minor.pad': 8,
-                         'ytick.major.pad': 4,  # distance to major tick label in points
-                         'ytick.minor.pad': 4,
-                         'xtick.direction': 'in',
-                         'ytick.direction': 'in',
-                         'axes.labelsize': self.textsize,
-                         'axes.linewidth': 3,
-                         'axes.unicode_minus': True,
-                         'axes.formatter.use_mathtext': True,
-                         'axes.prop_cycle': cycler('color', list(self.dfcmp.colors)) +
-                                            cycler('linestyle', self.linestyles[:self.dfcmp.N]),
-                         'axes.xmargin': 0.05,
-                         'axes.ymargin': 0.05,
-                         'axes.labelweight': 'normal',
-                         'contour.negative_linestyle': 'dashed',
-                         'lines.markersize': 10,  # size in points
-                         'legend.fontsize': .6 * self.textsize,
-                         'legend.numpoints': 2,
-                         'legend.handlelength': 1.,
-                         'legend.fancybox': True,
-                         'lines.linewidth': 3,
-                         'grid.linewidth': 1,
-                         'image.cmap': self.dfcmp.name,
-                         # 'figure.autolayout': True,
-                         'font.family': 'serif',
-                         'font.serif': 'cm10',
-                         'font.size': self.textsize,
-                         'font.weight': 'normal',
-                         'text.usetex': True,
-                         #'text.latex.preamble': [r"\usepackage{amsmath}", r'\boldmath'],
-                         # 'savefig.transparent': True, # problems with transparency, e.g. in Inkscape?
-                         'verbose.level': 'helpful'
-                         }
-
-        self.params.update(common_params)
-        matplotlib.rcParams.update(self.params)
 
         self.figures = []
 
@@ -179,7 +126,15 @@ class Plot(object):
         instance of class Plot
 
         """
-        return cls(output='paper')
+
+        rc = dict()
+        rc['figure.figsize'] = (11.69, 8.268)  # A4
+        rc['pdf.compression'] = 6  # 0 to 9
+        rc['savefig.format'] = 'pdf'
+        rc['pdf.fonttype'] = 42
+        rc['savefig.dpi'] = 300
+
+        return cls(output='paper', rc_spec=rc)
 
     @classmethod
     def talk(cls):
@@ -196,12 +151,17 @@ class Plot(object):
         instance of class Plot
 
         """
-        return cls(output='talk')
+        rc = dict()
+        rc['figure.figsize'] = (8.268, 5.872)  # A5
+        rc['savefig.format'] = 'png'
+        rc['savefig.dpi'] = 300
+
+        return cls(output='talk', rc_spec=rc)
 
     @classmethod
-    def icon(cls):
+    def poster(cls):
         """
-        Class method yielding an Plot instance of type "icon"
+        Class method yielding an Plot instance of type "poster"
 
         Parameters
         ----------
@@ -213,7 +173,34 @@ class Plot(object):
         instance of class Plot
 
         """
-        return cls(output='icon')
+
+        rc = dict()
+        rc['savefig.format'] = 'png'
+        rc['savefig.dpi'] = 300
+
+        return cls(output='poster')
+
+    @classmethod
+    def notebook(cls):
+        """
+        Class method yielding an Plot instance of type "notebook"
+
+        Parameters
+        ----------
+        cls: object
+            Plot class
+
+        Returns
+        -------
+        instance of class Plot
+
+        """
+
+        rc = dict()
+        rc['savefig.format'] = 'png'
+        rc['savefig.dpi'] = 300
+
+        return cls(output='notebook')
 
     ###############################################################################
     # ##                       PUBLIC FUNCTIONS                                ## #
@@ -378,7 +365,7 @@ class Plot(object):
         return fig
 
 
-    def add_scatterplot(self, x, y, labels=['x', 'y'], bins=20, kind="scatter", kdeplot=True):
+    def add_scatterplot(self, x, y, labels=['x', 'y'], factor=None, bins=20, kind="scatter", kdeplot=False, c_map="linear"):
         assert len(labels) == 2
 
         if isinstance(x, dict):
@@ -398,30 +385,27 @@ class Plot(object):
 
         # adjust colors
         if kdeplot:
-            color = self.pik_colours.colors[-1]
+            c = "k"
         else:
-            color = self.pik_colours.colors[0]
+            if factor is None:
+                c = self.pik_colours.colors[0]
+            else:
+                c = factor
 
         settings = {
-            "joint_kws": dict(alpha=0.5),
+            "joint_kws": dict(alpha=1, c=c, cmap=pyplot.get_cmap(c_map)),
             "marginal_kws": dict(bins=bins, rug=False),
             "annot_kws": dict(stat=r"r", frameon=True, loc="best", handlelength=0),
+            "space": 0.1,
             "kind": kind,
-            "color": color,
             "xlim": (xmin, xmax),
             "ylim": (ymin, ymax)
         }
 
-        scatter = seaborn.jointplot(
-            x,
-            y,
-            **settings
-        )
-
-        scatter.plot_joint(seaborn.jointplot, **settings)
+        scatter = seaborn.jointplot(x, y, **settings)
 
         if kdeplot:
-            scatter.plot_joint(seaborn.kdeplot, shade=True, cut=5, zorder=0, n_levels=6, cmap=self.lin_colours)
+            scatter.plot_joint(seaborn.kdeplot, shade=True, cut=5, zorder=0, n_levels=6, cmap=pyplot.get_cmap(c_map))
 
         scatter.set_axis_labels(*labels)
 
@@ -580,19 +564,25 @@ class Plot(object):
             if height:
                 ax.set_zlabel(axis_labels[2], labelpad=30)
 
+        # we may adjust the background colour to make light nodes more visible
+        #ax.set_axis_bgcolor((.9, .9, .9))
+
         self.figures.append(fig)
 
         return fig
 
     def save(self, fnames, fig = None):
         if fig:
-            fig.savefig(filename=fnames + '.' + self.params['savefig.format'], bbox_inches='tight')
+            fig.savefig(filename=fnames + '.' + self.rc['savefig.format'], bbox_inches='tight')
             self.clear(fig)
         else:
             assert len(fnames) == len(self.figures)
             for i, fig in enumerate(self.figures):
-                fig.savefig(filename=fnames[i] + '.' + self.params['savefig.format'], bbox_inches='tight')
-                self.clear(fig)
+                print "save:", fnames[i] + '.' + self.rc['savefig.format']
+                fig.savefig(filename=fnames[i] + '.' + self.rc['savefig.format'], bbox_inches='tight')
+                pyplot.close(fig)
+            for i, fig in enumerate(self.figures):
+                self.figures.remove(fig)
 
 
     def clear(self, fig):
@@ -607,22 +597,23 @@ class Plot(object):
         else:
             raise ValueError("No open figures to plot.")
 
-    def show_params(self):
-        for k in matplotlib.rcParams.keys():
-            print k
 
     def show_cmap(self, cmap_name):
-        assert isinstance(cmap_name, str)
+        if isinstance(cmap_name, str):
+            cmap = pyplot.get_cmap(cmap_name)
+        else:
+            cmap = cmap_name
         a=np.outer(np.arange(0,1,0.01), np.ones(10))
         pyplot.figure(figsize=(2,10))
         pyplot.axis("off")
-        pyplot.imshow(a,aspect='auto',interpolation='nearest', cmap=pyplot.get_cmap(cmap_name))
+        pyplot.imshow(a,aspect='auto',interpolation='nearest', cmap=cmap)
         pyplot.title(cmap_name,fontsize=15)
         pyplot.show()
 
     def update_params(self, dic):
         assert all([key in matplotlib.rcParams.keys() for key in dic.keys()])
-        matplotlib.rcParams.update(dic)
+        self.rc.update(dic)
+        seaborn.set(rc=self.rc)
 
     def portrait(self):
         canvas = self.params['figure.figsize']
