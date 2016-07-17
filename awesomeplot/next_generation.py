@@ -80,6 +80,16 @@ class AwesomePlot(Plot):
         else:
             return super(AwesomePlot, self).add_hist(*args, **kwargs)
 
+    @staticmethod
+    def df_to_dict(df):
+        assert isinstance(df, pandas.DataFrame)
+
+        # create dict from dataframe
+        dd = df.to_dict()
+
+        # remove sub-dictionaries
+        return {key: dd[key].values() for key in dd.keys()}
+
     ###############################################################################
     # ##                      PRIVATE FUNCTIONS                                ## #
     ###############################################################################
@@ -200,8 +210,12 @@ def test_case():
     x = np.arange(n)
     y = np.sin(x)
     z = 1 - 2. * np.random.random([n, n])
-
     u = np.random.random([n, 3])
+
+    df = pandas.DataFrame(
+        data={"x": x, "y": y, "y2": -y ** 3, "y3": z[0], "y4": z[1]},
+        index=x
+    )
 
     p.add_distplot(x=x, y=z)
 
@@ -209,7 +223,7 @@ def test_case():
 
     p.add_scatterplot(y, u[:, 1]**2, labels=label, kdeplot=True)
 
-    p.add_lineplot(x=x, lines={"y": y, "y2": -y**3,"y3": z[0], "y4": z[1]})
+    p.add_lineplot(x=x, lines=p.df_to_dict(df[["y", "y2"]]))
 
     p.add_hist(data=zip(*u))
 
@@ -225,9 +239,9 @@ def test_case():
                   height=True,
                   sym=False)
 
-    p.show()
-
     p.save(["test/o" + str(i) for i in range(len(p.figures))])
+
+    p.show()
 
 def test_pandas():
     p = AwesomePlot.talk()
