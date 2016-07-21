@@ -1,11 +1,11 @@
 import networkx as nx
 import numpy as np
 
-from awesomeplot.core import Plot
+from awesomeplot.pandas import AwesomePlot
 
-p = Plot.paper()
+p = AwesomePlot.paper()
 
-assert isinstance(p, Plot)
+assert isinstance(p, AwesomePlot)
 
 pos = np.random.random([100, 2])
 
