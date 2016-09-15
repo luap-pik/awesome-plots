@@ -1,7 +1,7 @@
 import networkx as nx
 import numpy as np
 
-from awesomeplot.pandas import AwesomePlot
+from awesomeplot.panda import AwesomePlot
 
 p = AwesomePlot.paper()
 

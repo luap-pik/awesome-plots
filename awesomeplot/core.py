@@ -104,103 +104,12 @@ class Plot(object):
         if rc_spec:
             self.rc.update(rc_spec)
 
-        seaborn.set_context(output, font_scale=font_scale, rc=self.rc)
         seaborn.set_style(style="white", rc=self.rc)
+        seaborn.set_context(output, font_scale=font_scale, rc=self.rc)
 
         self.set_default_colours('pik')
 
         self.figures = []
-
-    @classmethod
-    def paper(cls):
-        """
-        Class method yielding an Plot instance of type "paper"
-
-        Parameters
-        ----------
-        cls: object
-            Plot class
-
-        Returns
-        -------
-        instance of class Plot
-
-        """
-
-        rc = dict()
-        rc['figure.figsize'] = (11.69, 8.268)  # A4
-        rc['pdf.compression'] = 6  # 0 to 9
-        rc['savefig.format'] = 'pdf'
-        rc['pdf.fonttype'] = 42
-        rc['savefig.dpi'] = 300
-
-        return cls(output='paper', rc_spec=rc)
-
-    @classmethod
-    def talk(cls):
-        """
-        Class method yielding an Plot instance of type "talk"
-
-        Parameters
-        ----------
-        cls: object
-            Plot class
-
-        Returns
-        -------
-        instance of class Plot
-
-        """
-        rc = dict()
-        rc['figure.figsize'] = (8.268, 5.872)  # A5
-        rc['savefig.format'] = 'png'
-        rc['savefig.dpi'] = 300
-
-        return cls(output='talk', rc_spec=rc)
-
-    @classmethod
-    def poster(cls):
-        """
-        Class method yielding an Plot instance of type "poster"
-
-        Parameters
-        ----------
-        cls: object
-            Plot class
-
-        Returns
-        -------
-        instance of class Plot
-
-        """
-
-        rc = dict()
-        rc['savefig.format'] = 'png'
-        rc['savefig.dpi'] = 300
-
-        return cls(output='poster')
-
-    @classmethod
-    def notebook(cls):
-        """
-        Class method yielding an Plot instance of type "notebook"
-
-        Parameters
-        ----------
-        cls: object
-            Plot class
-
-        Returns
-        -------
-        instance of class Plot
-
-        """
-
-        rc = dict()
-        rc['savefig.format'] = 'png'
-        rc['savefig.dpi'] = 300
-
-        return cls(output='notebook')
 
     ###############################################################################
     # ##                       PUBLIC FUNCTIONS                                ## #
@@ -350,8 +259,8 @@ class Plot(object):
 
         fig.tight_layout()
 
-        c = ax.contourf(x, y, z, levels=levels, cmap=cmap, origin='lower', lw=1, antialiased=True, vmin=zmin, vmax=zmax)
-        cl = ax.contour(x, y, z, colors='k', levels=levels, lw=1)
+        c = ax.contourf(x, y, z, levels=levels, cmap=cmap, origin='lower', antialiased=True, vmin=zmin, vmax=zmax)
+        cl = ax.contour(x, y, z, colors='k', levels=levels, linewidths=.5)
         if text:
             ax.clabel(cl, fontsize=.25 * self.textsize, inline=1)
 
@@ -615,7 +524,10 @@ class Plot(object):
     def update_params(self, dic):
         assert all([key in matplotlib.rcParams.keys() for key in dic.keys()])
         self.rc.update(dic)
-        seaborn.set(rc=self.rc)
+        # do not use seaborn.set(), this overrides all rc params ...
+        for key, val in dic.iteritems():
+            matplotlib.rcParams[key] = val
+
 
     def portrait(self):
         canvas = self.params['figure.figsize']

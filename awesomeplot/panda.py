@@ -29,7 +29,7 @@ from matplotlib import pyplot
 # import seaborn for fancy style templates
 import seaborn
 
-# pandas is still optional but will become standard in the next version
+# pandass is still optional but will become standard in the next version
 import pandas
 
 from core import Plot
@@ -51,7 +51,97 @@ class AwesomePlot(Plot):
     def __init__(self, output='paper', rc_spec={}, font_scale=1.1, use_pandas=False):
         super(AwesomePlot, self).__init__(output, rc_spec, font_scale)
         self.use_pandas = use_pandas
-        seaborn.set_style(style="white", rc=self.rc)
+
+    @classmethod
+    def paper(cls, font_scale=1.2, use_pandas=False):
+        """
+        Class method yielding an Plot instance of type "paper"
+
+        Parameters
+        ----------
+        cls: object
+            Plot class
+
+        Returns
+        -------
+        instance of class Plot
+
+        """
+
+        rc = dict()
+        rc['figure.figsize'] = (11.69, 8.268)  # A4
+        rc['pdf.compression'] = 6  # 0 to 9
+        rc['savefig.format'] = 'pdf'
+        rc['pdf.fonttype'] = 42
+        rc['savefig.dpi'] = 300
+
+        return cls(output='paper', rc_spec=rc, font_scale=font_scale, use_pandas=use_pandas)
+
+    @classmethod
+    def talk(cls, font_scale=1.2, use_pandas=False):
+        """
+        Class method yielding an Plot instance of type "talk"
+
+        Parameters
+        ----------
+        cls: object
+            Plot class
+
+        Returns
+        -------
+        instance of class Plot
+
+        """
+        rc = dict()
+        rc['figure.figsize'] = (8.268, 5.872)  # A5
+        rc['savefig.format'] = 'png'
+        rc['savefig.dpi'] = 300
+
+        return cls(output='talk', rc_spec=rc, font_scale=font_scale, use_pandas=use_pandas)
+
+    @classmethod
+    def poster(cls, font_scale=1.2, use_pandas=False):
+        """
+        Class method yielding an Plot instance of type "poster"
+
+        Parameters
+        ----------
+        cls: object
+            Plot class
+
+        Returns
+        -------
+        instance of class Plot
+
+        """
+
+        rc = dict()
+        rc['savefig.format'] = 'png'
+        rc['savefig.dpi'] = 300
+
+        return cls(output='poster', font_scale=font_scale, use_pandas=use_pandas)
+
+    @classmethod
+    def notebook(cls, font_scale=1.2, use_pandas=False):
+        """
+        Class method yielding an Plot instance of type "notebook"
+
+        Parameters
+        ----------
+        cls: object
+            Plot class
+
+        Returns
+        -------
+        instance of class Plot
+
+        """
+
+        rc = dict()
+        rc['savefig.format'] = 'png'
+        rc['savefig.dpi'] = 300
+
+        return cls(output='notebook', font_scale=font_scale, use_pandas=use_pandas)
 
 
     ###############################################################################
@@ -196,8 +286,9 @@ class AwesomePlot(Plot):
 
 
 def test_case():
-    p = AwesomePlot.talk()
+    p = AwesomePlot.paper(font_scale=1.5)
     assert isinstance(p, AwesomePlot)
+
 
     label = [r"$S_B$", "S"]
 
@@ -235,15 +326,17 @@ def test_case():
                   height=True,
                   sym=False)
 
-    p.save(["test/o" + str(i) for i in range(len(p.figures))])
-
     p.show()
 
+    p.save(["test/o" + str(i) for i in range(len(p.figures))])
+
+
+
 def test_pandas():
-    p = AwesomePlot.talk()
+    p = AwesomePlot.talk(use_pandas=True)
     assert isinstance(p, AwesomePlot)
 
-    p.use_pandas = True
+    assert p.use_pandas == True
 
     p.set_default_colours("pik")
 
