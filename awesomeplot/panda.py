@@ -210,7 +210,7 @@ class AwesomePlot(Plot):
 
         return fig
 
-    def __scatterplotPD(self, df, x, y, factor=None, bins=20, kind="scatter", kdeplot=False, c_map="linear"):
+    def __scatterplotPD(self, df, x, y, factor=None, bins=20, show_annot=None, kind="scatter", kdeplot=False, c_map="linear"):
         assert isinstance(x, basestring)
         assert isinstance(y, basestring)
 
@@ -239,7 +239,7 @@ class AwesomePlot(Plot):
         }
 
         try:
-            scatter = seaborn.jointplot(x, y, data=df, **settings)
+            scatter = seaborn.jointplot(x, y, data=df, stat_func=show_annot, **settings)
         except:
             # some kws are not valid in certain plot kinds
             pyplot.close()
@@ -250,7 +250,7 @@ class AwesomePlot(Plot):
                 "xlim": (xmin, xmax),
                 "ylim": (ymin, ymax)
             }
-            scatter = seaborn.jointplot(x, y, data=df, **settings)
+            scatter = seaborn.jointplot(x, y, data=df, stat_func=show_annot, **settings)
 
         if kdeplot:
             scatter.plot_joint(seaborn.kdeplot, shade=True, cut=5, zorder=0, n_levels=6, cmap=pyplot.get_cmap(c_map))
@@ -286,7 +286,7 @@ class AwesomePlot(Plot):
 
 
 def test_case():
-    p = AwesomePlot.paper(font_scale=1.5)
+    p = AwesomePlot.talk(font_scale=2)
     assert isinstance(p, AwesomePlot)
 
 
@@ -326,7 +326,7 @@ def test_case():
                   height=True,
                   sym=False)
 
-    p.show()
+    # p.show()
 
     p.save(["test/o" + str(i) for i in range(len(p.figures))])
 
@@ -340,7 +340,7 @@ def test_pandas():
 
     p.set_default_colours("pik")
 
-    n = 200
+    n = 100
 
     x = np.arange(n)
     y = np.sin(x)
@@ -366,7 +366,7 @@ def test_pandas():
     p.show()
 
 if __name__ == "__main__":
-    test_case()
+    #test_case()
     test_pandas()
 
 

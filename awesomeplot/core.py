@@ -275,7 +275,7 @@ class Plot(object):
         return fig
 
 
-    def add_scatterplot(self, x, y, labels=['x', 'y'], factor=None, bins=20, kind="scatter", kdeplot=False, c_map="linear"):
+    def add_scatterplot(self, x, y, labels=['x', 'y'], factor=None, show_annot=None, bins=20, kind="scatter", kdeplot=False, c_map="linear"):
         assert len(labels) == 2
 
         if isinstance(x, dict):
@@ -305,14 +305,14 @@ class Plot(object):
         settings = {
             "joint_kws": dict(alpha=1, c=c, cmap=pyplot.get_cmap(c_map)),
             "marginal_kws": dict(bins=bins, rug=False),
-            "annot_kws": dict(stat=r"r", frameon=True, loc="best", handlelength=0),
+            "annot_kws": dict(stat=None, frameon=True, loc="best", handlelength=0),
             "space": 0.1,
             "kind": kind,
             "xlim": (xmin, xmax),
             "ylim": (ymin, ymax)
         }
 
-        scatter = seaborn.jointplot(x, y, **settings)
+        scatter = seaborn.jointplot(x, y, stat_func=show_annot, **settings)
 
         if kdeplot:
             scatter.plot_joint(seaborn.kdeplot, shade=True, cut=5, zorder=0, n_levels=6, cmap=pyplot.get_cmap(c_map))
