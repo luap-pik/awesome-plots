@@ -104,103 +104,12 @@ class Plot(object):
         if rc_spec:
             self.rc.update(rc_spec)
 
-        seaborn.set_context(output, font_scale=font_scale, rc=self.rc)
         seaborn.set_style(style="white", rc=self.rc)
+        seaborn.set_context(output, font_scale=font_scale, rc=self.rc)
 
         self.set_default_colours('pik')
 
         self.figures = []
-
-    @classmethod
-    def paper(cls):
-        """
-        Class method yielding an Plot instance of type "paper"
-
-        Parameters
-        ----------
-        cls: object
-            Plot class
-
-        Returns
-        -------
-        instance of class Plot
-
-        """
-
-        rc = dict()
-        rc['figure.figsize'] = (11.69, 8.268)  # A4
-        rc['pdf.compression'] = 6  # 0 to 9
-        rc['savefig.format'] = 'pdf'
-        rc['pdf.fonttype'] = 42
-        rc['savefig.dpi'] = 300
-
-        return cls(output='paper', rc_spec=rc)
-
-    @classmethod
-    def talk(cls):
-        """
-        Class method yielding an Plot instance of type "talk"
-
-        Parameters
-        ----------
-        cls: object
-            Plot class
-
-        Returns
-        -------
-        instance of class Plot
-
-        """
-        rc = dict()
-        rc['figure.figsize'] = (8.268, 5.872)  # A5
-        rc['savefig.format'] = 'png'
-        rc['savefig.dpi'] = 300
-
-        return cls(output='talk', rc_spec=rc)
-
-    @classmethod
-    def poster(cls):
-        """
-        Class method yielding an Plot instance of type "poster"
-
-        Parameters
-        ----------
-        cls: object
-            Plot class
-
-        Returns
-        -------
-        instance of class Plot
-
-        """
-
-        rc = dict()
-        rc['savefig.format'] = 'png'
-        rc['savefig.dpi'] = 300
-
-        return cls(output='poster')
-
-    @classmethod
-    def notebook(cls):
-        """
-        Class method yielding an Plot instance of type "notebook"
-
-        Parameters
-        ----------
-        cls: object
-            Plot class
-
-        Returns
-        -------
-        instance of class Plot
-
-        """
-
-        rc = dict()
-        rc['savefig.format'] = 'png'
-        rc['savefig.dpi'] = 300
-
-        return cls(output='notebook')
 
     ###############################################################################
     # ##                       PUBLIC FUNCTIONS                                ## #
@@ -350,8 +259,8 @@ class Plot(object):
 
         fig.tight_layout()
 
-        c = ax.contourf(x, y, z, levels=levels, cmap=cmap, origin='lower', lw=1, antialiased=True, vmin=zmin, vmax=zmax)
-        cl = ax.contour(x, y, z, colors='k', levels=levels, lw=1)
+        c = ax.contourf(x, y, z, levels=levels, cmap=cmap, origin='lower', antialiased=True, vmin=zmin, vmax=zmax)
+        cl = ax.contour(x, y, z, colors='k', levels=levels, linewidths=.5)
         if text:
             ax.clabel(cl, fontsize=.25 * self.textsize, inline=1)
 
@@ -366,7 +275,7 @@ class Plot(object):
         return fig
 
 
-    def add_scatterplot(self, x, y, labels=['x', 'y'], factor=None, bins=20, kind="scatter", kdeplot=False, c_map="linear"):
+    def add_scatterplot(self, x, y, labels=['x', 'y'], factor=None, show_annot=None, bins=20, kind="scatter", kdeplot=False, c_map="linear"):
         assert len(labels) == 2
 
         if isinstance(x, dict):
@@ -396,14 +305,14 @@ class Plot(object):
         settings = {
             "joint_kws": dict(alpha=1, c=c, cmap=pyplot.get_cmap(c_map)),
             "marginal_kws": dict(bins=bins, rug=False),
-            "annot_kws": dict(stat=r"r", frameon=True, loc="best", handlelength=0),
+            "annot_kws": dict(stat=None, frameon=True, loc="best", handlelength=0),
             "space": 0.1,
             "kind": kind,
             "xlim": (xmin, xmax),
             "ylim": (ymin, ymax)
         }
 
-        scatter = seaborn.jointplot(x, y, **settings)
+        scatter = seaborn.jointplot(x, y, stat_func=show_annot, **settings)
 
         if kdeplot:
             scatter.plot_joint(seaborn.kdeplot, shade=True, cut=5, zorder=0, n_levels=6, cmap=pyplot.get_cmap(c_map))
@@ -556,7 +465,7 @@ class Plot(object):
         if labels:
             for i in xrange(N):
                 pyplot.annotate(str(i), xy=(x[i], y[i]), xytext=(3, 3), textcoords='offset points',
-                                size=0.5 * self.params["font.size"],
+                                # size=0.5 * self.rc["font.size"],
                                 horizontalalignment='left', verticalalignment='bottom')
 
         if axis_labels:
@@ -615,14 +524,17 @@ class Plot(object):
     def update_params(self, dic):
         assert all([key in matplotlib.rcParams.keys() for key in dic.keys()])
         self.rc.update(dic)
-        seaborn.set(rc=self.rc)
+        # do not use seaborn.set(), this overrides all rc params ...
+        for key, val in dic.iteritems():
+            matplotlib.rcParams[key] = val
+
 
     def portrait(self):
-        canvas = self.params['figure.figsize']
+        canvas = self.rc['figure.figsize']
         if canvas[1] > canvas[0]:
             raise Warning("Figure is already in portrait orientation.")
         else:
-            self.params['figure.figsize'] = canvas[::-1]
+            self.rc['figure.figsize'] = canvas[::-1]
 
     def set_default_colours(self, cmap_name):
         self.dfcmp = pyplot.get_cmap(cmap_name)

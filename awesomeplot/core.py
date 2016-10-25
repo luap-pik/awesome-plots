@@ -465,7 +465,7 @@ class Plot(object):
         if labels:
             for i in xrange(N):
                 pyplot.annotate(str(i), xy=(x[i], y[i]), xytext=(3, 3), textcoords='offset points',
-                                size=0.5 * self.params["font.size"],
+                                # size=0.5 * self.rc["font.size"],
                                 horizontalalignment='left', verticalalignment='bottom')
 
         if axis_labels:
@@ -530,11 +530,11 @@ class Plot(object):
 
 
     def portrait(self):
-        canvas = self.params['figure.figsize']
+        canvas = self.rc['figure.figsize']
         if canvas[1] > canvas[0]:
             raise Warning("Figure is already in portrait orientation.")
         else:
-            self.params['figure.figsize'] = canvas[::-1]
+            self.rc['figure.figsize'] = canvas[::-1]
 
     def set_default_colours(self, cmap_name):
         self.dfcmp = pyplot.get_cmap(cmap_name)

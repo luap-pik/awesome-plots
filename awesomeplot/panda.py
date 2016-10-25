@@ -366,7 +366,7 @@ def test_pandas():
     p.show()
 
 if __name__ == "__main__":
-    #test_case()
+    test_case()
     test_pandas()
 
 
