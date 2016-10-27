@@ -185,7 +185,7 @@ class Plot(object):
         if grid:
             ax.grid()
 
-        for i in sorted(lines.keys(), key=sortfunc):
+        for i in sorted(lines.keys(), key=sortfunc, reverse=True):
             if shades:
                 shade = ax.fill_between(x, shades[i][0], shades[i][1], alpha=0.3, edgecolor='none',
                                         facecolor=hex2color('#8E908F'))
