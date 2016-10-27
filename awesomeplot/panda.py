@@ -74,6 +74,9 @@ class AwesomePlot(Plot):
         rc['savefig.format'] = 'pdf'
         rc['pdf.fonttype'] = 42
         rc['savefig.dpi'] = 300
+        # rc["axes.labelsize"] = 30  # change size of all three labels of axes
+        # rc['xtick.labelsize'] = 25
+        # rc['ytick.labelsize'] = 25
 
         return cls(output='paper', rc_spec=rc, font_scale=font_scale, use_pandas=use_pandas)
 
