@@ -96,7 +96,7 @@ class Plot(object):
 
         self.rc = {'xtick.direction': 'in',
                    # TODO: KeyError: 'savefig.format' in p.save, although declaration of savefig.format in panda.py
-                'savefig.format': '.pdf',
+                'savefig.format': 'pdf',
               'ytick.direction': 'in',
               'verbose.level': 'helpful',
               'lines.linewidth': 3,
@@ -301,6 +301,8 @@ class Plot(object):
         if layout:
             if not np.isfinite(z):
                 print "Since z is not finite, it would be better to use layout=False."
+            if not fixed_scale==[0,0]:
+                print "Fixed scale will be ignored, if layout is true"
             zmin = np.floor(np(z))
             if z.max() < 0.5:
                 zmax = z.max()
@@ -312,8 +314,16 @@ class Plot(object):
             cl = ax.contour(x, y, z, colors='k', levels=levels)
         else:
             pyplot.gca().patch.set_color('k')  # print the Nan/inf Values in White)
-            c = ax.contourf(x, y, z, cmap=cmap, origin='lower', antialiased=True)
-            cl = ax.contour(x, y, z, colors='k')
+            if fixed_scale == [0,0]:
+                c = ax.contourf(x, y, z, cmap=cmap, origin='lower', antialiased=True)
+                cl = ax.contour(x, y, z, colors='k')
+            else:
+                zmin= fixed_scale[0]
+                zmax= fixed_scale[1]
+                c = ax.contourf(x, y, z, cmap=cmap, origin='lower', antialiased=True, vmin=zmin,
+                                vmax=zmax)
+                cl = ax.contour(x, y, z, colors='k')
+
 
         if text:
             ax.clabel(cl, fontsize=.25 * self.textsize, inline=1)
