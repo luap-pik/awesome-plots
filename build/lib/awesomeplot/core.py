@@ -33,6 +33,9 @@ from matplotlib.colors import ListedColormap, LinearSegmentedColormap, hex2color
 # import seaborn for fancy style templates
 import seaborn
 
+# import warnings module to issue warning on user input without interrupting the program
+import warnings
+
 class Plot(object):
     """
     Plot class.
@@ -96,12 +99,12 @@ class Plot(object):
 
         self.rc = {'xtick.direction': 'in',
                    # TODO: KeyError: 'savefig.format' in p.save, although declaration of savefig.format in panda.py
-                'savefig.format': 'pdf',
-              'ytick.direction': 'in',
-              'verbose.level': 'helpful',
-              'lines.linewidth': 3,
-              'axes.linewidth': 3
-              }
+                   'savefig.format': 'pdf',
+                   'ytick.direction': 'in',
+                   'verbose.level': 'helpful',
+                   'lines.linewidth': 3,
+                   'axes.linewidth': 3
+                   }
 
         if rc_spec:
             self.rc.update(rc_spec)
@@ -182,7 +185,7 @@ class Plot(object):
         if grid:
             ax.grid()
 
-        for i in sorted(lines.keys(), key=sortfunc):
+        for i in sorted(lines.keys(), key=sortfunc, reverse=True):
             if shades:
                 shade = ax.fill_between(x, shades[i][0], shades[i][1], alpha=0.3, edgecolor='none',
                                         facecolor=hex2color('#8E908F'))
@@ -254,34 +257,42 @@ class Plot(object):
 
         return fig
 
-    def add_contour(self, x, y, z, labels=['x', 'y', 'z'], nlevel=10, sym=False, text=False, horizontal=False, pi=None,
-                    layout=True, fixed_scale=[0.,0.]):
+    def add_contour(self, x, y, z, labels=['x', 'y', 'z'], nlevel=10, sym=False, text=False, horizontal=False, pi=None, layout=True, fixed_scale=None):
         """
             Plots Contourplots
 
             Parameters
             ----------
             x: array
+                x-values associated to the entries in z
             y: array
+                y-values associated to the entries in z
             z: matrix
+                data of shape [len(x), len(y)] containing values for all (x, y) pairs
             nlevel: int
                 number of levels of the contourplot
             sym: bool
-                False: Only Orange, True: Blue and Orange
+                False: using linear colour scale, else diverging
             text: bool
-                if true: labels on every level line
+                True: labels on every level line
             horizontal: bool
-                if True: print colourbar horizontal
+                True: horizontal colour bar
             pi: "xaxis" or "yaxis"
                 if one of the axis is given in multiples of pi
             layout: bool
-                False means, the contourf/contour function dont get a number of levels or a zmin and zmax. This is
-                necessary for plots with NANs or Infs in it, since than zmin and zmax are set to NAN/Inf.
-            fixed_scale: array with 2 doubles, first stands for minimum and second for maximum of z-axis
-                if you want to plot graphs wiith the same scale
+                False means, the contourf/contour function dont get a
+                number of levels or a zmin and zmax. This is necessary
+                for a matrix z with NANs or Infs in it, since then
+                zmin and zmax become NAN/Inf.
+            fixed_scale: tuple
+                min/max values to apply a fixed colour scale to z-values
 
         """
         assert len(labels) == 3
+
+        # Issue warning if z contains NaN or Inf
+        if not np.isfinite(z).any():
+            warnings.warn("Since z is not finite, it would be better to use layout=False.")
 
         if sym:
             cmap = pyplot.get_cmap('sym')
@@ -302,32 +313,27 @@ class Plot(object):
 
         fig.tight_layout()
 
-        if layout:
-            if not np.isfinite(z):
-                print "Since z is not finite, it would be better to use layout=False."
-            if not fixed_scale==[0,0]:
-                print "Fixed scale will be ignored, if layout is true"
-            zmin = np.floor(np(z))
-            if z.max() < 0.5:
-                zmax = z.max()
-            else:
-                zmax = np.ceil(z.max())
-            levels = np.linspace(zmin, zmax, nlevel + 1, endpoint=True)
+        if not fixed_scale is None:
+            zmin, zmax = fixed_scale
+        else:
+            zmin = np.floor(z[np.isfinite(z)].min())
+            zmax = z[np.isfinite(z)].max()
 
+            if zmax > 0.5:
+                zmax = np.ceil(z[np.isfinite(z)].max())
+
+            if zmin == zmax:
+                zmax += 0.5
+
+        pyplot.gca().patch.set_color('k')  # print the Nan/inf Values in black)
+
+        if layout:
+            levels = np.linspace(zmin, zmax, nlevel + 1, endpoint=True)
             c = ax.contourf(x, y, z, levels=levels, cmap=cmap, origin='lower', antialiased=True, vmin=zmin, vmax=zmax)
             cl = ax.contour(x, y, z, colors='k', levels=levels)
         else:
-            pyplot.gca().patch.set_color('k')  # print the Nan/inf Values in White)
-            if fixed_scale == [0,0]:
-                c = ax.contourf(x, y, z, cmap=cmap, origin='lower', antialiased=True)
-                cl = ax.contour(x, y, z, colors='k')
-            else:
-                zmin= fixed_scale[0]
-                zmax= fixed_scale[1]
-                c = ax.contourf(x, y, z, cmap=cmap, origin='lower', antialiased=True, vmin=zmin,
-                                vmax=zmax)
-                cl = ax.contour(x, y, z, colors='k')
-
+            c = ax.contourf(x, y, z, cmap=cmap, origin='lower', antialiased=True, vmin=zmin, vmax=zmax)
+            cl = ax.contour(x, y, z, colors='k')
 
         if text:
             ax.clabel(cl, fontsize=.25 * self.textsize, inline=1)
@@ -475,7 +481,7 @@ class Plot(object):
 
         if issparse(adjacency):
             assert isspmatrix_dok(adjacency)
-            print "Build network from sparse dok matrix."
+            # print "Build network from sparse dok matrix."
             N = adjacency.shape[0]
             edgelist = sorted(set([tuple(np.sort(key)) for key in adjacency.iterkeys()]))
         else:
@@ -637,7 +643,7 @@ class Plot(object):
     def portrait(self):
         canvas = self.rc['figure.figsize']
         if canvas[1] > canvas[0]:
-            raise Warning("Figure is already in portrait orientation.")
+            warnings.warn("Figure is already in portrait orientation.")
         else:
             self.rc['figure.figsize'] = canvas[::-1]
 

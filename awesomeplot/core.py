@@ -291,7 +291,7 @@ class Plot(object):
         assert len(labels) == 3
 
         # Issue warning if z contains NaN or Inf
-        if not np.isfinite(z):
+        if not np.isfinite(z).any():
             warnings.warn("Since z is not finite, it would be better to use layout=False.")
 
         if sym:
@@ -316,17 +316,24 @@ class Plot(object):
         if not fixed_scale is None:
             zmin, zmax = fixed_scale
         else:
-            zmin = np.floor(np.isfinite(z))
-            if z.max() < 0.5:
-                zmax = np.max(np.isfinite(z))
-            else:
-                zmax = np.ceil(np.max(np.isfinite(z)))
+            zmin = np.floor(z[np.isfinite(z)].min())
+            zmax = z[np.isfinite(z)].max()
+
+            if zmax > 0.5:
+                zmax = np.ceil(z[np.isfinite(z)].max())
+
+            if zmin == zmax:
+                zmax += 0.5
 
         pyplot.gca().patch.set_color('k')  # print the Nan/inf Values in black)
 
-        levels = np.linspace(zmin, zmax, nlevel + 1, endpoint=True)
-        c = ax.contourf(x, y, z, levels=levels, cmap=cmap, origin='lower', antialiased=True, vmin=zmin, vmax=zmax)
-        cl = ax.contour(x, y, z, colors='k', levels=levels)
+        if layout:
+            levels = np.linspace(zmin, zmax, nlevel + 1, endpoint=True)
+            c = ax.contourf(x, y, z, levels=levels, cmap=cmap, origin='lower', antialiased=True, vmin=zmin, vmax=zmax)
+            cl = ax.contour(x, y, z, colors='k', levels=levels)
+        else:
+            c = ax.contourf(x, y, z, cmap=cmap, origin='lower', antialiased=True, vmin=zmin, vmax=zmax)
+            cl = ax.contour(x, y, z, colors='k')
 
         if text:
             ax.clabel(cl, fontsize=.25 * self.textsize, inline=1)
