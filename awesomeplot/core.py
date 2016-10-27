@@ -99,12 +99,12 @@ class Plot(object):
 
         self.rc = {'xtick.direction': 'in',
                    # TODO: KeyError: 'savefig.format' in p.save, although declaration of savefig.format in panda.py
-                'savefig.format': 'pdf',
-              'ytick.direction': 'in',
-              'verbose.level': 'helpful',
-              'lines.linewidth': 3,
-              'axes.linewidth': 3
-              }
+                   'savefig.format': 'pdf',
+                   'ytick.direction': 'in',
+                   'verbose.level': 'helpful',
+                   'lines.linewidth': 3,
+                   'axes.linewidth': 3
+                   }
 
         if rc_spec:
             self.rc.update(rc_spec)
@@ -474,7 +474,7 @@ class Plot(object):
 
         if issparse(adjacency):
             assert isspmatrix_dok(adjacency)
-            print "Build network from sparse dok matrix."
+            # print "Build network from sparse dok matrix."
             N = adjacency.shape[0]
             edgelist = sorted(set([tuple(np.sort(key)) for key in adjacency.iterkeys()]))
         else:
@@ -636,7 +636,7 @@ class Plot(object):
     def portrait(self):
         canvas = self.rc['figure.figsize']
         if canvas[1] > canvas[0]:
-            raise Warning("Figure is already in portrait orientation.")
+            warnings.warn("Figure is already in portrait orientation.")
         else:
             self.rc['figure.figsize'] = canvas[::-1]
 
