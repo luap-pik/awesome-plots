@@ -115,7 +115,7 @@ class Plot(object):
     # ##                       PUBLIC FUNCTIONS                                ## #
     ###############################################################################
 
-    def add_lineplot(self, x=None, lines={}, shades={}, labels=['x', 'y'], grid=False):
+    def add_lineplot(self, x=None, lines={}, shades={}, labels=['x', 'y'], grid=False, layout=True):
         """
         Plots (multiple) lines with optional shading.
 
@@ -136,10 +136,16 @@ class Plot(object):
             list containing  meaningful axis labels
         grid: bool
             if true, background grid is drawn
+        layout: bool
+            if false min and max will not be set , important for plots with NANs and Infs
         """
 
         assert len(labels) == 2
-        assert len(lines.keys()) <= self.dfcmp.N
+        # the next line leads to an error if there are more lines to be plotted
+        # than colours available, although there are alsy different linestyles possible
+        # TODO write new assert with message that you can use other colourmaps by p.set_default_colours(x),
+        # with x = 'discrete'(10 colours), 'pik' (4 colours, default), 'linear', 'sym'
+        #assert len(lines.keys()) <= self.dfcmp.N
 
         if x is None:
             x = np.arange(len(lines[0]))
@@ -147,33 +153,40 @@ class Plot(object):
         if shades:
             assert sorted(shades.keys()) == sorted(lines.keys())
 
-        # determine boundaries
-        xmin = np.min(x)
-        xmax = np.max(x)
-        if not shades:
-            ymin = np.min([np.min(l) for l in lines.itervalues()])
-            ymax = np.max([np.max(l) for l in lines.itervalues()])
-        else:
-            ymin = np.min([np.min(l) for l in shades.itervalues()])
-            ymax = np.max([np.max(l) for l in shades.itervalues()])
-
-        xmargin = (xmax - xmin) / 200.
-        ymargin = (ymax - ymin) / 200.
-
-        scale = np.log(1 + 1. * (xmax - xmin) / len(x))
-
         fig, ax = pyplot.subplots(nrows=1, ncols=1)
 
-        ax.axis([xmin - xmargin, xmax + xmargin, ymin - ymargin, ymax + ymargin])
+        # determine boundaries
+        if layout:
+            xmin = np.min(x)
+            xmax = np.max(x)
+            if not shades:
+                ymin = np.min([np.min(l) for l in lines.itervalues()])
+                ymax = np.max([np.max(l) for l in lines.itervalues()])
+            else:
+                ymin = np.min([np.min(l) for l in shades.itervalues()])
+                ymax = np.max([np.max(l) for l in shades.itervalues()])
+
+            xmargin = (xmax - xmin) / 200.
+            ymargin = (ymax - ymin) / 200.
+
+            scale = np.log(1 + 1. * (xmax - xmin) / len(x))
+
+            ax.axis([xmin - xmargin, xmax + xmargin, ymin - ymargin, ymax + ymargin])
+
         if grid:
             ax.grid()
+
         for i in lines.keys():
             if shades:
                 shade = ax.fill_between(x, shades[i][0], shades[i][1], alpha=0.3, edgecolor='none',
                                         facecolor=hex2color('#8E908F'))
                 ax.plot(x, lines[i], marker='o', mew=3.*scale, mec=shade._facecolors[0], ms=10.*scale, label=i)
             else:
-                ax.plot(x, lines[i], marker='o', mec='w', mew=3*scale, ms=10.*scale, label=i)
+                if layout:
+                    ax.plot(x, lines[i], marker='o', mec='w', mew=3*scale, ms=10.*scale, label=i)
+                else:
+                    ax.plot(x, lines[i], marker='o', mec='w', label=i)
+
         ax.set_xlabel(labels[0])
         ax.set_ylabel(labels[1])
         pyplot.legend(frameon=True)
@@ -235,8 +248,33 @@ class Plot(object):
 
         return fig
 
-    def add_contour(self, x, y, z, labels=['x', 'y', 'z'], nlevel=10, sym=False, text=False):
+    def add_contour(self, x, y, z, labels=['x', 'y', 'z'], nlevel=10, sym=False, text=False, horizontal=False, pi=None,
+                    layout=True, fixed_scale=[0.,0.]):
+        """
+            Plots Contourplots
 
+            Parameters
+            ----------
+            x: array
+            y: array
+            z: matrix
+            nlevel: int
+                number of levels of the contourplot
+            sym: bool
+                False: Only Orange, True: Blue and Orange
+            text: bool
+                if true: labels on every level line
+            horizontal: bool
+                if True: print colourbar horizontal
+            pi: "xaxis" or "yaxis"
+                if one of the axis is given in multiples of pi
+            layout: bool
+                False means, the contourf/contour function dont get a number of levels or a zmin and zmax. This is
+                necessary for plots with NANs or Infs in it, since than zmin and zmax are set to NAN/Inf.
+            fixed_scale: array with 2 doubles, first stands for minimum and second for maximum of z-axis
+                if you want to plot graphs wiith the same scale
+
+        """
         assert len(labels) == 3
 
         if sym:
@@ -244,23 +282,37 @@ class Plot(object):
         else:
             cmap = pyplot.get_cmap('linear')
 
+        backup = matplotlib.rcParams['lines.linewidth']
+        matplotlib.rcParams['lines.linewidth'] = 1
+
         # determine boundaries
+
         xmin = x.min()
         xmax = x.max()
         ymin = y.min()
         ymax = y.max()
 
-        # r = int(np.log(max(abs(z.min()), abs(z.max()))))
-        zmin = np.floor(z.min())
-        zmax = np.ceil(z.max())
-        levels = np.linspace(zmin, zmax, nlevel + 1, endpoint=True)
-
         fig, ax = pyplot.subplots(nrows=1, ncols=1)
 
         fig.tight_layout()
 
-        c = ax.contourf(x, y, z, levels=levels, cmap=cmap, origin='lower', antialiased=True, vmin=zmin, vmax=zmax)
-        cl = ax.contour(x, y, z, colors='k', levels=levels, linewidths=.5)
+        if layout:
+            if not np.isfinite(z):
+                print "Since z is not finite, it would be better to use layout=False."
+            zmin = np.floor(np(z))
+            if z.max() < 0.5:
+                zmax = z.max()
+            else:
+                zmax = np.ceil(z.max())
+            levels = np.linspace(zmin, zmax, nlevel + 1, endpoint=True)
+
+            c = ax.contourf(x, y, z, levels=levels, cmap=cmap, origin='lower', antialiased=True, vmin=zmin, vmax=zmax)
+            cl = ax.contour(x, y, z, colors='k', levels=levels)
+        else:
+            pyplot.gca().patch.set_color('k')  # print the Nan/inf Values in White)
+            c = ax.contourf(x, y, z, cmap=cmap, origin='lower', antialiased=True)
+            cl = ax.contour(x, y, z, colors='k')
+
         if text:
             ax.clabel(cl, fontsize=.25 * self.textsize, inline=1)
 
@@ -268,9 +320,27 @@ class Plot(object):
 
         ax.set_xlabel(labels[0])
         ax.set_ylabel(labels[1])
-        fig.colorbar(c, label=labels[2], format=r"%.1f")
+
+        if pi == "xaxis":
+            x_label = np.empty(np.size(ax.get_xticks()), dtype='object')
+            for i in range(np.size(ax.get_xticks())):
+                x_label[i] = str(ax.get_xticks()[i]) + "$\pi$"
+            ax.set_xticklabels(x_label)
+
+        if pi == "yaxis":
+            y_label = np.empty(np.size(ax.get_yticks()), dtype='object')
+            for i in range(np.size(ax.get_yticks())):
+                y_label[i] = str(ax.get_yticks()[i]) + "$\pi$"
+            ax.set_yticklabels(y_label)
+
+        if horizontal:
+            fig.colorbar(c, label=labels[2], orientation='horizontal', pad=0.2)
+        else:
+            fig.colorbar(c, label=labels[2])  # not so cool for smalll numbers format=r"%.1f"
 
         self.figures.append(fig)
+
+        matplotlib.rcParams['lines.linewidth'] = backup
 
         return fig
 
@@ -362,14 +432,26 @@ class Plot(object):
 
         return fig
 
-    def add_network(self, adjacency, styles={}, sym=True, axis_labels=None, labels=False, height=False):
+    def add_network(self, adjacency, styles={}, sym=True, axis_labels=None, vertex_labels=None, labels=False, height=False):
         """
-        submit eg vertex color values via styles={"vertex_color":values}
+            Plots network, submit eg vertex color values via styles={"vertex_color":values}
 
-        :param graph:
-        :param styles:
-        :param sym:
-        :return:
+            Parameters
+            ----------
+            adjacency:
+            styles: dict
+
+            sym: bool
+                if true:
+            axis_labels:
+
+            vertex_labels: array
+                e.g. pars["input_power"]
+            labels: bool
+
+            height: bool
+
+
         """
         if height:
             from mpl_toolkits.mplot3d import Axes3D
@@ -474,6 +556,13 @@ class Plot(object):
             if height:
                 ax.set_zlabel(axis_labels[2], labelpad=30)
 
+        if vertex_labels is not None:
+            for i in xrange(N):
+                pyplot.annotate(np.around(vertex_labels[i], decimals=3), xy=(x[i], y[i]), xytext=(3, -25),
+                                textcoords='offset points',
+                                # size=0.5 * self.params["font.size"],
+                                horizontalalignment='left', verticalalignment='bottom')
+
         # we may adjust the background colour to make light nodes more visible
         #ax.set_axis_bgcolor((.9, .9, .9))
 
@@ -560,7 +649,7 @@ class Plot(object):
             raise ValueError("Invalid input. Must be x, y, or xy.")
 
 if __name__ == "__main__":
-    p = Plot.paper()
+    p = Plot(output="paper")
 
     #p.show_cmap(p.dfcmp.name)
 

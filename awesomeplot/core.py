@@ -95,6 +95,8 @@ class Plot(object):
         assert output in ["paper", "talk", "poster", "notebook"]
 
         self.rc = {'xtick.direction': 'in',
+                   # TODO: KeyError: 'savefig.format' in p.save, although declaration of savefig.format in panda.py
+                'savefig.format': '.pdf',
               'ytick.direction': 'in',
               'verbose.level': 'helpful',
               'lines.linewidth': 3,
