@@ -291,8 +291,8 @@ class Plot(object):
         assert len(labels) == 3
 
         # Issue warning if z contains NaN or Inf
-        if not np.isfinite(z).any():
-            warnings.warn("Since z is not finite, it would be better to use layout=False.")
+        if not np.isfinite(z).all():
+            warnings.warn("Attention: z is not finite.")
 
         if sym:
             cmap = pyplot.get_cmap('sym')
@@ -325,7 +325,7 @@ class Plot(object):
             if zmin == zmax:
                 zmax += 0.5
 
-        pyplot.gca().patch.set_color('k')  # print the Nan/inf Values in black)
+        pyplot.gca().patch.set_color('#8e908f')  # print the Nan/inf Values in black)
 
         if layout:
             levels = np.linspace(zmin, zmax, nlevel + 1, endpoint=True)
