@@ -117,7 +117,8 @@ class Plot(object):
     # ##                       PUBLIC FUNCTIONS                                ## #
     ###############################################################################
 
-    def add_lineplot(self, x=None, lines={}, shades={}, labels=['x', 'y'], grid=False, layout=True):
+
+    def add_lineplot(self, x=None, lines={}, shades={}, labels=['x', 'y'], sortfunc=None, grid=False, layout=True):
         """
         Plots (multiple) lines with optional shading.
 
@@ -136,6 +137,9 @@ class Plot(object):
             intervals to indicate uncertainty, confidence intervals etc.
         labels: list [str]
             list containing  meaningful axis labels
+        sortfunc: function or lambda expression
+            optionally supply a function that is used to sort the line keys for plotting
+            e.g. (a) sortfunc = float (b) sortfunc=f, where f = lambda x: float(x.split()[-2])
         grid: bool
             if true, background grid is drawn
         layout: bool
@@ -178,7 +182,7 @@ class Plot(object):
         if grid:
             ax.grid()
 
-        for i in lines.keys():
+        for i in sorted(lines.keys(), key=sortfunc):
             if shades:
                 shade = ax.fill_between(x, shades[i][0], shades[i][1], alpha=0.3, edgecolor='none',
                                         facecolor=hex2color('#8E908F'))
