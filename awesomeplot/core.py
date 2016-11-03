@@ -62,7 +62,7 @@ class Plot(object):
 
     # PIK discrete cmap (4 items)
     pik_colours = ListedColormap(
-        np.array(['#e37222', '#009fda', '#69923a', '#8e908f']),
+        np.array(['#F25B28', '#009FDA', '#69923A', '#686C70']),
         'pik'
     )
     register_cmap(pik_colours.name, cmap=pik_colours)

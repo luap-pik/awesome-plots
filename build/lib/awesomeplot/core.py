@@ -97,9 +97,13 @@ class Plot(object):
 
         assert output in ["paper", "talk", "poster", "notebook"]
 
+        # workaround for KeyError in self.rc savefig.format
+        if output in ["talk", "poster"]:
+            self.figure_format = "png"
+        else:
+            self.figure_format = "pdf"
+
         self.rc = {'xtick.direction': 'in',
-                   # TODO: KeyError: 'savefig.format' in p.save, although declaration of savefig.format in panda.py
-                   'savefig.format': 'pdf',
                    'ytick.direction': 'in',
                    'verbose.level': 'helpful',
                    'lines.linewidth': 3,
@@ -594,13 +598,13 @@ class Plot(object):
 
     def save(self, fnames, fig = None):
         if fig:
-            fig.savefig(filename=fnames + '.' + self.rc['savefig.format'], bbox_inches='tight')
+            fig.savefig(filename=fnames + '.' + self.figure_format, bbox_inches='tight')
             self.clear(fig)
         else:
             assert len(fnames) == len(self.figures)
             for i, fig in enumerate(self.figures):
-                print "save:", fnames[i] + '.' + self.rc['savefig.format']
-                fig.savefig(filename=fnames[i] + '.' + self.rc['savefig.format'], bbox_inches='tight')
+                print "save:", fnames[i] + '.' + self.figure_format
+                fig.savefig(filename=fnames[i] + '.' + self.figure_format, bbox_inches='tight')
                 pyplot.close(fig)
             for i, fig in enumerate(self.figures):
                 self.figures.remove(fig)
