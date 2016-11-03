@@ -100,8 +100,10 @@ class Plot(object):
         # workaround for KeyError in self.rc savefig.format
         if output in ["talk", "poster"]:
             self.figure_format = "png"
+            self.transparent = True
         else:
             self.figure_format = "pdf"
+            self.transparent = False
 
         self.rc = {'xtick.direction': 'in',
                    'ytick.direction': 'in',
@@ -598,13 +600,13 @@ class Plot(object):
 
     def save(self, fnames, fig = None):
         if fig:
-            fig.savefig(filename=fnames + '.' + self.figure_format, bbox_inches='tight')
+            fig.savefig(filename=fnames + '.' + self.figure_format, bbox_inches='tight', transparent=self.transparent)
             self.clear(fig)
         else:
             assert len(fnames) == len(self.figures)
             for i, fig in enumerate(self.figures):
                 print "save:", fnames[i] + '.' + self.figure_format
-                fig.savefig(filename=fnames[i] + '.' + self.figure_format, bbox_inches='tight')
+                fig.savefig(filename=fnames[i] + '.' + self.figure_format, bbox_inches='tight', transparent=self.transparent)
                 pyplot.close(fig)
             for i, fig in enumerate(self.figures):
                 self.figures.remove(fig)
