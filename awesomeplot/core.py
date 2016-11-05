@@ -84,7 +84,7 @@ class Plot(object):
     # linestyle sequence for multiplots
     linestyles = np.tile(['-', '--', '-.', ':'], 1 + discrete_colours.N // 4)[:discrete_colours.N]
 
-    def __init__(self, output='paper', rc_spec={}, font_scale=1.1):
+    def __init__(self, output='paper', rc_spec={}, font_scale=2):
         """
             Initialise an instance of Plot.
 

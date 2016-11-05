@@ -62,7 +62,7 @@ class Plot(object):
 
     # PIK discrete cmap (4 items)
     pik_colours = ListedColormap(
-        np.array(['#e37222', '#009fda', '#69923a', '#8e908f']),
+        np.array(['#F25B28', '#009FDA', '#69923A', '#686C70']),
         'pik'
     )
     register_cmap(pik_colours.name, cmap=pik_colours)
@@ -84,7 +84,7 @@ class Plot(object):
     # linestyle sequence for multiplots
     linestyles = np.tile(['-', '--', '-.', ':'], 1 + discrete_colours.N // 4)[:discrete_colours.N]
 
-    def __init__(self, output='paper', rc_spec={}, font_scale=1.1):
+    def __init__(self, output='paper', rc_spec={}, font_scale=2):
         """
             Initialise an instance of Plot.
 
@@ -100,8 +100,10 @@ class Plot(object):
         # workaround for KeyError in self.rc savefig.format
         if output in ["talk", "poster"]:
             self.figure_format = "png"
+            self.transparent = True
         else:
             self.figure_format = "pdf"
+            self.transparent = False
 
         self.rc = {'xtick.direction': 'in',
                    'ytick.direction': 'in',
@@ -598,13 +600,13 @@ class Plot(object):
 
     def save(self, fnames, fig = None):
         if fig:
-            fig.savefig(filename=fnames + '.' + self.figure_format, bbox_inches='tight')
+            fig.savefig(filename=fnames + '.' + self.figure_format, bbox_inches='tight', transparent=self.transparent)
             self.clear(fig)
         else:
             assert len(fnames) == len(self.figures)
             for i, fig in enumerate(self.figures):
                 print "save:", fnames[i] + '.' + self.figure_format
-                fig.savefig(filename=fnames[i] + '.' + self.figure_format, bbox_inches='tight')
+                fig.savefig(filename=fnames[i] + '.' + self.figure_format, bbox_inches='tight', transparent=self.transparent)
                 pyplot.close(fig)
             for i, fig in enumerate(self.figures):
                 self.figures.remove(fig)
