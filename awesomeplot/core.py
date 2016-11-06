@@ -2,11 +2,11 @@
 # -*- coding: utf-8 -*-
 
 __author__ = "Paul Schultz"
-__date__ = "May 23, 2016"
-__version__ = "v0.3"
+__date__ = "Nov 6, 2016"
+__version__ = "v2.1"
 
 """
-Module contains class Plot.
+Module contains class AwesomePlot.
 
 Derivative of the matplotlib module. The aim is to create
 visually attractive, unambigous and colour-blind-friendly
@@ -33,12 +33,17 @@ from matplotlib.colors import ListedColormap, LinearSegmentedColormap, hex2color
 # import seaborn for fancy style templates
 import seaborn
 
+# import pandas for advanced plotting using DataFrames
+
+
 # import warnings module to issue warning on user input without interrupting the program
 import warnings
 
-class Plot(object):
+# TODO: optional fig,ax objects as arguments: add_*(..., figax=None): fig, ax = figax
+
+class AwesomePlot(object):
     """
-    Plot class.
+    AwesomePlot class.
 
     The class is consistently sets reasonable matplotlib rc parameters for three different use cases.
     It can be instantiated either to create images for
@@ -86,7 +91,7 @@ class Plot(object):
 
     def __init__(self, output='paper', rc_spec={}, font_scale=2):
         """
-            Initialise an instance of Plot.
+            Initialise an instance of AwesomePlot.
 
             Parameters
             ----------
@@ -132,7 +137,7 @@ class Plot(object):
         Plots (multiple) lines with optional shading.
 
         This function adds a matplotlib figure object to the figure collection of
-        an Plot instance.
+        an AwesomePlot instance.
 
         Parameters
         ----------
@@ -676,24 +681,270 @@ class Plot(object):
         else:
             raise ValueError("Invalid input. Must be x, y, or xy.")
 
+
+class Plot(AwesomePlot):
+    """
+    Plot class.
+
+    The class is consistently sets reasonable matplotlib rc parameters for three different use cases.
+    It can be instantiated either to create images for
+
+    a) publications (A4, pdf)
+    b) talks (A5, png)
+    c) posters (not implemented)
+
+    Images are landscape per default.
+    """
+
+    def __init__(self, output='paper', rc_spec={}, font_scale=1.1, use_pandas=False):
+        super(Plot, self).__init__(output, rc_spec, font_scale)
+        self.use_pandas = use_pandas
+
+
+    @classmethod
+    def paper(cls, font_scale=1.2, use_pandas=False):
+        """
+        Class method yielding an AwesomePlot instance of type "paper"
+
+        Parameters
+        ----------
+        cls: object
+            AwesomePlot class
+
+        Returns
+        -------
+        instance of class AwesomePlot
+
+        """
+
+        rc = dict()
+        rc['figure.figsize'] = (11.69, 8.268)  # A4
+        rc['pdf.compression'] = 6  # 0 to 9
+        rc['savefig.format'] = 'pdf'
+        rc['pdf.fonttype'] = 42
+        rc['savefig.dpi'] = 300
+
+
+        return cls(output='paper', rc_spec=rc, font_scale=font_scale, use_pandas=use_pandas)
+
+    @classmethod
+    def talk(cls, font_scale=1.2, use_pandas=False):
+        """
+        Class method yielding an AwesomePlot instance of type "talk"
+
+        Parameters
+        ----------
+        cls: object
+            AwesomePlot class
+
+        Returns
+        -------
+        instance of class AwesomePlot
+
+        """
+        rc = dict()
+        rc['figure.figsize'] = (8.268, 5.872)  # A5
+        rc['savefig.format'] = 'png'
+        rc['savefig.dpi'] = 300
+
+        return cls(output='talk', rc_spec=rc, font_scale=font_scale, use_pandas=use_pandas)
+
+    @classmethod
+    def poster(cls, font_scale=1.2, use_pandas=False):
+        """
+        Class method yielding an AwesomePlot instance of type "poster"
+
+        Parameters
+        ----------
+        cls: object
+            AwesomePlot class
+
+        Returns
+        -------
+        instance of class AwesomePlot
+
+        """
+
+        rc = dict()
+        rc['savefig.format'] = 'png'
+        rc['savefig.dpi'] = 300
+
+        return cls(output='poster', font_scale=font_scale, use_pandas=use_pandas)
+
+    @classmethod
+    def notebook(cls, font_scale=1.2, use_pandas=False):
+        """
+        Class method yielding an AwesomePlot instance of type "notebook"
+
+        Parameters
+        ----------
+        cls: object
+            AwesomePlot class
+
+        Returns
+        -------
+        instance of class AwesomePlot
+
+        """
+
+        rc = dict()
+        rc['savefig.format'] = 'png'
+        rc['savefig.dpi'] = 300
+
+        return cls(output='notebook', font_scale=font_scale, use_pandas=use_pandas)
+
+
+    ###############################################################################
+    # ##                       PUBLIC FUNCTIONS                                ## #
+    ###############################################################################
+
+    def add_lineplot(self, *args, **kwargs):
+        if self.use_pandas:
+            return self.__lineplotPD(*args, **kwargs)
+        else:
+            return super(Plot, self).add_lineplot(*args, **kwargs)
+
+    def add_scatterplot(self, *args, **kwargs):
+        if self.use_pandas:
+            return self.__scatterplotPD(*args, **kwargs)
+        else:
+            return super(Plot, self).add_scatterplot(*args, **kwargs)
+
+    def add_hist(self, *args, **kwargs):
+        if self.use_pandas:
+            return self.__histplotPD(*args, **kwargs)
+        else:
+            return super(Plot, self).add_hist(*args, **kwargs)
+
+    @staticmethod
+    def df_to_dict(df):
+        from pandas import DataFrame
+        assert isinstance(df, DataFrame)
+
+        # create dict from dataframe
+        dd = df.to_dict()
+
+        # remove sub-dictionaries
+        return {key: dd[key].values() for key in dd.keys()}
+
+    ###############################################################################
+    # ##                      PRIVATE FUNCTIONS                                ## #
+    ###############################################################################
+
+
+    def __lineplotPD(self, df, firstcol=False, legend=True, grid=True, logx=False, logy=False, loglog=False):
+        from pandas import DataFrame
+        assert isinstance(df, DataFrame)
+
+        # transfer x-values to dataframe index
+        if firstcol:
+            df.index = df[df.columns[0]]
+            df = df[df.columns[1:]]
+
+
+        fig, ax = pyplot.subplots(nrows=1, ncols=1)
+        df.plot(
+            kind="line",
+            use_index=True,
+            marker='o',
+            mew=2,
+            mec='w',
+            colormap=self.dfcmp,
+            grid=grid,
+            legend=legend,
+            ax=ax,
+            loglog=loglog,
+            logx=logx,
+            logy=logy
+        )
+
+        self.figures.append(fig)
+
+        return fig
+
+    def __scatterplotPD(self, df, x, y, factor=None, bins=20, show_annot=None, kind="scatter", kdeplot=False, c_map="linear"):
+        from pandas import DataFrame
+        assert isinstance(df, DataFrame)
+
+        # FIXME: check, whether x and y are columns of df
+        assert isinstance(x, basestring)
+        assert isinstance(y, basestring)
+
+        if kdeplot:
+            c = "k"
+        else:
+            if factor is None:
+                c = self.pik_colours.colors[0]
+            else:
+                assert isinstance(factor, basestring)
+                c = df[factor]
+
+        xmin = df[x].min()
+        xmax = df[x].max()
+        ymin = df[y].min()
+        ymax = df[y].max()
+
+        settings = {
+            "joint_kws": dict(alpha=1, c=c, cmap=pyplot.get_cmap(c_map)),
+            "marginal_kws": dict(bins=bins, rug=False),
+            "annot_kws": dict(stat=r"r", frameon=True, loc=0, handlelength=0),
+            "space": 0.1,
+            "kind": kind,
+            "xlim": (xmin, xmax),
+            "ylim": (ymin, ymax)
+        }
+
+        try:
+            scatter = seaborn.jointplot(x, y, data=df, stat_func=show_annot, **settings)
+        except:
+            # some kws are not valid in certain plot kinds
+            pyplot.close()
+            settings = {
+                "annot_kws": dict(stat=r"r", frameon=True, loc=0, handlelength=0),
+                "space": 0.1,
+                "kind": kind,
+                "xlim": (xmin, xmax),
+                "ylim": (ymin, ymax)
+            }
+            scatter = seaborn.jointplot(x, y, data=df, stat_func=show_annot, **settings)
+
+        if kdeplot:
+            scatter.plot_joint(seaborn.kdeplot, shade=True, cut=5, zorder=0, n_levels=6, cmap=pyplot.get_cmap(c_map))
+
+        fig = scatter.fig
+        pyplot.close() # close JointGrid object
+
+        self.figures.append(fig)
+
+        return fig
+
+    def __histplotPD(self, df, columns=None, normed=True, nbins=20, log=False, c_map="pik"):
+        from pandas import DataFrame
+        assert isinstance(df, DataFrame)
+
+        if columns:
+            df = df[columns]
+
+        settings = {
+            "stacked": True,
+            #"alpha": 0.75,
+            "bins": nbins,
+            "normed": normed,
+            "log": log,
+            "cmap": c_map
+        }
+
+        fig, ax = pyplot.subplots(nrows=1, ncols=1)
+        df.plot.hist(ax=ax, **settings)
+
+        self.figures.append(fig)
+
+        return fig
+
+
+
 if __name__ == "__main__":
-    p = Plot(output="paper")
-
-    #p.show_cmap(p.dfcmp.name)
-
-    labels = [r'$\phi$']
-
-    x = np.arange(10)
-    z = 1 - 2. * np.random.random([10, 10])
-    #p.add_contour(x, x, z, sym=True)
-
-    import networkx as nx
-    A = nx.to_scipy_sparse_matrix(nx.erdos_renyi_graph(10, 0.01), format="dok")
-
-
-    f = p.add_network(A, styles={"vertex_color": np.random.random(10)}, height=False)
-
-    p.save("test/test", f)
-
-    p.show()
+    # TODO: implement tests!
+    import doctest
+    doctest.testmod()
 
