@@ -33,10 +33,7 @@ from matplotlib.colors import ListedColormap, LinearSegmentedColormap, hex2color
 # import seaborn for fancy style templates
 import seaborn
 
-# import pandas for advanced plotting using DataFrames
-
-
-# import warnings module to issue warning on user input without interrupting the program
+# import warnings module to issue warnings on user input without interrupting the program
 import warnings
 
 # TODO: optional fig,ax objects as arguments: add_*(..., figax=None): fig, ax = figax
