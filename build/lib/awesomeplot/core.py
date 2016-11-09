@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 __author__ = "Paul Schultz"
-__date__ = "May 23, 2016"
-__version__ = "v0.3"
+__date__ = "Nov 6, 2016"
+__version__ = "v2.1"
 
 """
 Module contains class AwesomePlot.
@@ -33,10 +33,7 @@ from matplotlib.colors import ListedColormap, LinearSegmentedColormap, hex2color
 # import seaborn for fancy style templates
 import seaborn
 
-# import pandas for advanced plotting using DataFrames
-import pandas
-
-# import warnings module to issue warning on user input without interrupting the program
+# import warnings module to issue warnings on user input without interrupting the program
 import warnings
 
 # TODO: optional fig,ax objects as arguments: add_*(..., figax=None): fig, ax = figax
@@ -818,7 +815,8 @@ class Plot(AwesomePlot):
 
     @staticmethod
     def df_to_dict(df):
-        assert isinstance(df, pandas.DataFrame)
+        from pandas import DataFrame
+        assert isinstance(df, DataFrame)
 
         # create dict from dataframe
         dd = df.to_dict()
@@ -832,7 +830,8 @@ class Plot(AwesomePlot):
 
 
     def __lineplotPD(self, df, firstcol=False, legend=True, grid=True, logx=False, logy=False, loglog=False):
-        assert isinstance(df, pandas.DataFrame)
+        from pandas import DataFrame
+        assert isinstance(df, DataFrame)
 
         # transfer x-values to dataframe index
         if firstcol:
@@ -861,6 +860,10 @@ class Plot(AwesomePlot):
         return fig
 
     def __scatterplotPD(self, df, x, y, factor=None, bins=20, show_annot=None, kind="scatter", kdeplot=False, c_map="linear"):
+        from pandas import DataFrame
+        assert isinstance(df, DataFrame)
+
+        # FIXME: check, whether x and y are columns of df
         assert isinstance(x, basestring)
         assert isinstance(y, basestring)
 
@@ -913,10 +916,11 @@ class Plot(AwesomePlot):
         return fig
 
     def __histplotPD(self, df, columns=None, normed=True, nbins=20, log=False, c_map="pik"):
+        from pandas import DataFrame
+        assert isinstance(df, DataFrame)
 
         if columns:
             df = df[columns]
-
 
         settings = {
             "stacked": True,
@@ -935,88 +939,9 @@ class Plot(AwesomePlot):
         return fig
 
 
-def test_case():
-    p = Plot.talk(font_scale=2)
-    assert isinstance(p, Plot)
-
-
-    label = [r"$S_B$", "S"]
-
-    n = 20
-
-    x = np.arange(n)
-    y = np.sin(x)
-    z = 1 - 2. * np.random.random([n, n])
-    u = np.random.random([n, 3])
-
-    df = pandas.DataFrame(
-        data={"x": x, "y": y, "y2": -y ** 3, "y3": z[0], "y4": z[1]},
-        index=x
-    )
-
-    p.add_distplot(x=x, y=z)
-
-    p.add_contour(x=x, y=x, z=z, sym=True)
-
-    p.add_scatterplot(y, u[:, 1]**2, labels=label, kdeplot=True)
-
-    p.add_lineplot(x=x, lines=p.df_to_dict(df[["y", "y2"]]))
-
-    p.add_hist(data=zip(*u))
-
-    import networkx as nx
-    G = nx.erdos_renyi_graph(n, 0.1)
-    A = nx.to_scipy_sparse_matrix(G, format="dok")
-    layout = np.vstack(nx.fruchterman_reingold_layout(G, center=10).values())
-    layout = np.c_[layout, y]
-
-    p.add_network(adjacency=A,
-                  styles={"vertex_color": np.random.random(n),
-                              "layout": layout},
-                  height=True,
-                  sym=False)
-
-    # p.show()
-
-    p.save(["test/o" + str(i) for i in range(len(p.figures))])
-
-
-
-def test_pandas():
-
-    p = Plot.talk(use_pandas=True)
-    assert isinstance(p, Plot)
-
-    assert p.use_pandas == True
-
-    p.set_default_colours("pik")
-
-    n = 100
-
-    x = np.arange(n)
-    y = np.sin(x)
-    z = 1 - 2. * np.random.random([n, n])
-
-    u = np.random.random([n, 3])
-
-    df = pandas.DataFrame(
-        data={"x": x, "y": y, "y2": -y**3,"y3": z[0], "y4": z[1]},
-        index=x
-    )
-
-    assert isinstance(df, pandas.DataFrame)
-
-    p.add_lineplot(df, firstcol=True)
-
-    p.add_scatterplot(df, "y", "y4", factor="x", kdeplot=True)
-
-    p.add_hist(df, c_map="discrete")
-
-    p.save(["test/p" + str(i) for i in range(len(p.figures))])
-
-    p.show()
 
 if __name__ == "__main__":
-    test_case()
-    test_pandas()
+    # TODO: implement tests!
+    import doctest
+    doctest.testmod()
 
