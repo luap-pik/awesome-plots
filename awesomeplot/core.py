@@ -129,7 +129,7 @@ class AwesomePlot(object):
     ###############################################################################
 
 
-    def add_lineplot(self, x=None, lines={}, shades={}, labels=['x', 'y'], sortfunc=None, grid=False, layout=True):
+    def add_lineplot(self, x=None, lines={}, shades={}, labels=['x', 'y'], sortfunc=None, grid=False, layout=True, legend=True):
         """
         Plots (multiple) lines with optional shading.
 
@@ -206,7 +206,8 @@ class AwesomePlot(object):
 
         ax.set_xlabel(labels[0])
         ax.set_ylabel(labels[1])
-        pyplot.legend(frameon=True)
+        if legend:
+            pyplot.legend(frameon=True)
         fig.tight_layout()
 
         self.figures.append(fig)
