@@ -462,7 +462,7 @@ class AwesomePlot(object):
 
         return fig
 
-    def add_network(self, adjacency, styles={}, sym=True, axis_labels=None, labels=False, height=False,node_cb=True, cmap="copper"):
+    def add_network(self, adjacency, styles={}, sym=True, axis_labels=None, vertex_labels=None, labels=False, height=False,node_cb=True, cmap="copper"):
         """
             Plots network, submit eg vertex color values via styles={"vertex_color":values}
 
