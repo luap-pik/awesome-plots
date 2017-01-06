@@ -159,7 +159,7 @@ class AwesomePlot(object):
 
         assert len(labels) == 2
         # the next line leads to an error if there are more lines to be plotted
-        # than colours available, although there are alsy different linestyles possible
+        # than colours available, although there are also different linestyles possible
         # TODO write new assert with message that you can use other colourmaps by p.set_default_colours(x),
         # with x = 'discrete'(10 colours), 'pik' (4 colours, default), 'linear', 'sym'
         #assert len(lines.keys()) <= self.dfcmp.N
@@ -312,7 +312,6 @@ class AwesomePlot(object):
         matplotlib.rcParams['lines.linewidth'] = 1
 
         # determine boundaries
-
         xmin = x.min()
         xmax = x.max()
         ymin = y.min()
@@ -463,7 +462,7 @@ class AwesomePlot(object):
 
         return fig
 
-    def add_network(self, adjacency, styles={}, sym=True, axis_labels=None, vertex_labels=None, labels=False, height=False):
+    def add_network(self, adjacency, styles={}, sym=True, axis_labels=None, labels=False, height=False,node_cb=True, cmap="copper"):
         """
             Plots network, submit eg vertex color values via styles={"vertex_color":values}
 
@@ -520,10 +519,17 @@ class AwesomePlot(object):
                 visual_style["layout"] = np.random.random([N, 2])
             print "Assign random layout for plotting."
 
+        map_edges = pyplot.get_cmap(name=cmap)
+
         if visual_style.has_key("edge_color_dict"):
-            f = lambda x: visual_style["edge_color_dict"][x]
+            min_color = np.min(visual_style["edge_color_dict"].values())
+            max_color = np.max(visual_style["edge_color_dict"].values())
+            f = lambda x: (np.float(visual_style["edge_color"][x]) - min_color) / (max_color - min_color)
             for i, e in enumerate(edgelist):
                 visual_style["edge_color"][i] = f(e)
+            alpha = 1.
+        else:
+            alpha = 0.4
 
         if height:
             fig = pyplot.figure()
@@ -548,8 +554,22 @@ class AwesomePlot(object):
                     color=visual_style["edge_color"][i],
                     linestyle='-',
                     lw=visual_style["edge_width"],
-                    alpha=0.5,
+                    alpha=alpha,
                     zorder=1)
+        #TODO: edge colorbar
+        #if visual_style.has_key("edge_color_dict"):
+        #    sm = pyplot.cm.ScalarMappable(cmap=map_edges, norm=pyplot.Normalize(vmin= min_color, vmax= max_color))
+        #    # fake up the array of the scalar mappable. Urgh...
+        #    sm.set_array(visual_style["edge_color"])
+        #    cb= pyplot.colorbar(sm,format=r"%.2f")
+        #    cb.outline.set_visible(False)
+        #    from matplotlib import ticker
+        #    tick_locator = ticker.MaxNLocator(nbins=6)
+        #    cb.locator = tick_locator
+        #    cb.update_ticks()
+        #    ax.set_title('maximum equals '+str(max_color)+' at edge '+str(visual_style["edge_color_dict"].keys()[np.argmax(visual_style[
+        # "edge_color_dict"].values())]))
+
 
         margin = max(0.05 * (np.max(x) - np.min(x)), 0.05 * (np.max(y) - np.min(y)))
         ax.set_xlim([np.min(x) - margin, np.max(x) + margin])
@@ -571,9 +591,8 @@ class AwesomePlot(object):
                                vmax=np.ceil(np.max(visual_style["vertex_color"])),
                                edgecolor='w',
                                zorder=2)
-            cb = fig.colorbar(nodes, orientation='horizontal', shrink=0.66, format=r"%.1f")
-            # deprecated
-            # [t.set_fontsize(seaborn.axes_style()["legend.fontsize"]) for t in cb.ax.get_xticklabels()]
+            if node_cb:
+                cb = fig.colorbar(nodes, orientation='horizontal', shrink=0.66, format=r"%.2f")
 
         if labels:
             for i in xrange(N):
