@@ -611,7 +611,7 @@ class AwesomePlot(object):
 
         if vertex_labels is not None:
             for i in xrange(N):
-                pyplot.annotate(np.around(vertex_labels[i], decimals=3), xy=(x[i], y[i]), xytext=(3, -25),
+                pyplot.annotate(vertex_labels[i], xy=(x[i], y[i]), xytext=(3, -25),
                                 textcoords='offset points',
                                 # size=0.5 * self.params["font.size"],
                                 horizontalalignment='left', verticalalignment='bottom')
@@ -789,7 +789,7 @@ class Plot(AwesomePlot):
         rc['savefig.format'] = 'png'
         rc['savefig.dpi'] = 300
 
-        return cls(output='poster', font_scale=font_scale, use_pandas=use_pandas)
+        return cls(output='poster', rc_spec=rc, font_scale=font_scale, use_pandas=use_pandas)
 
     @classmethod
     def notebook(cls, font_scale=1.2, use_pandas=False):
@@ -811,7 +811,7 @@ class Plot(AwesomePlot):
         rc['savefig.format'] = 'png'
         rc['savefig.dpi'] = 300
 
-        return cls(output='notebook', font_scale=font_scale, use_pandas=use_pandas)
+        return cls(output='notebook', rc_spec=rc, font_scale=font_scale, use_pandas=use_pandas)
 
 
     ###############################################################################

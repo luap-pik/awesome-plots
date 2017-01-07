@@ -611,7 +611,7 @@ class AwesomePlot(object):
 
         if vertex_labels is not None:
             for i in xrange(N):
-                pyplot.annotate(np.around(vertex_labels[i], decimals=3), xy=(x[i], y[i]), xytext=(3, -25),
+                pyplot.annotate(vertex_labels[i], xy=(x[i], y[i]), xytext=(3, -25),
                                 textcoords='offset points',
                                 # size=0.5 * self.params["font.size"],
                                 horizontalalignment='left', verticalalignment='bottom')
