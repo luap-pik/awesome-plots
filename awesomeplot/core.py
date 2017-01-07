@@ -853,9 +853,6 @@ class Plot(AwesomePlot):
 
 
     def __lineplotPD(self, df, firstcol=False, legend=True, grid=True, logx=False, logy=False, loglog=False):
-        from pandas import DataFrame
-        assert isinstance(df, DataFrame)
-
         # transfer x-values to dataframe index
         if firstcol:
             df.index = df[df.columns[0]]
@@ -883,8 +880,6 @@ class Plot(AwesomePlot):
         return fig
 
     def __scatterplotPD(self, df, x, y, factor=None, bins=20, show_annot=None, kind="scatter", kdeplot=False, c_map="linear"):
-        from pandas import DataFrame
-        assert isinstance(df, DataFrame)
 
         # FIXME: check, whether x and y are columns of df
         assert isinstance(x, basestring)
@@ -939,8 +934,6 @@ class Plot(AwesomePlot):
         return fig
 
     def __histplotPD(self, df, columns=None, normed=True, nbins=20, log=False, c_map="pik"):
-        from pandas import DataFrame
-        assert isinstance(df, DataFrame)
 
         if columns:
             df = df[columns]

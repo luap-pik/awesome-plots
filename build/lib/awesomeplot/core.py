@@ -597,21 +597,21 @@ class AwesomePlot(object):
             if node_cb:
                 cb = fig.colorbar(nodes, orientation='horizontal', shrink=0.66, format=r"%.2f")
 
-        if labels:
-            for i in xrange(N):
-                pyplot.annotate(str(i), xy=(x[i], y[i]), xytext=(3, 3), textcoords='offset points',
-                                # size=0.5 * self.rc["font.size"],
-                                horizontalalignment='left', verticalalignment='bottom')
-
         if axis_labels:
             ax.set_xlabel(axis_labels[0], labelpad=30)
             ax.set_ylabel(axis_labels[1], labelpad=30)
             if height:
                 ax.set_zlabel(axis_labels[2], labelpad=30)
 
-        if vertex_labels is not None:
+        if vertex_labels is None:
+            if labels:
+                for i in xrange(N):
+                    pyplot.annotate(str(i), xy=(x[i], y[i]), xytext=(3, 3), textcoords='offset points',
+                                    # size=0.5 * self.rc["font.size"],
+                                    horizontalalignment='left', verticalalignment='bottom')
+        else:
             for i in xrange(N):
-                pyplot.annotate(vertex_labels[i], xy=(x[i], y[i]), xytext=(3, -25),
+                pyplot.annotate(str(vertex_labels[i]), xy=(x[i], y[i]), xytext=(3, -25),
                                 textcoords='offset points',
                                 # size=0.5 * self.params["font.size"],
                                 horizontalalignment='left', verticalalignment='bottom')
@@ -853,9 +853,6 @@ class Plot(AwesomePlot):
 
 
     def __lineplotPD(self, df, firstcol=False, legend=True, grid=True, logx=False, logy=False, loglog=False):
-        from pandas import DataFrame
-        assert isinstance(df, DataFrame)
-
         # transfer x-values to dataframe index
         if firstcol:
             df.index = df[df.columns[0]]
@@ -883,8 +880,6 @@ class Plot(AwesomePlot):
         return fig
 
     def __scatterplotPD(self, df, x, y, factor=None, bins=20, show_annot=None, kind="scatter", kdeplot=False, c_map="linear"):
-        from pandas import DataFrame
-        assert isinstance(df, DataFrame)
 
         # FIXME: check, whether x and y are columns of df
         assert isinstance(x, basestring)
@@ -939,8 +934,6 @@ class Plot(AwesomePlot):
         return fig
 
     def __histplotPD(self, df, columns=None, normed=True, nbins=20, log=False, c_map="pik"):
-        from pandas import DataFrame
-        assert isinstance(df, DataFrame)
 
         if columns:
             df = df[columns]
