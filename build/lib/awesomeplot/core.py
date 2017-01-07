@@ -52,40 +52,6 @@ class AwesomePlot(object):
     Images are landscape per default.
     """
 
-    # predefine colour maps:
-
-    # generic discrete cmap (10 items)
-    discrete_colours = ListedColormap(
-        np.array(
-            ['#1f77b4', '#33a02c', '#ff7f00', '#6a3d9a', '#e31a1c', '#a6cee3', '#b2df8a', '#fb9a99', '#fdbf6f', '#cab2d6']),
-        'discrete'
-    )
-    register_cmap('discrete', cmap=discrete_colours)
-
-    # PIK discrete cmap (4 items)
-    pik_colours = ListedColormap(
-        np.array(['#F25B28', '#009FDA', '#69923A', '#686C70']),
-        'pik'
-    )
-    register_cmap(pik_colours.name, cmap=pik_colours)
-
-    # linear interpolated cmap (based on PIK colours)
-    lin_colours = LinearSegmentedColormap.from_list(
-        'linear', [(0, 'w'), (1, hex2color('#e37222'))]
-    )
-    lin_colours.set_bad(hex2color('#8e908f'))
-    register_cmap(lin_colours.name, cmap=lin_colours)
-
-    # symmetric interpolated cmap (based on PIK colours)
-    sym_colours = LinearSegmentedColormap.from_list(
-        'sym', [(0, hex2color('#009fda')), (0.5, hex2color('#8e908f')), (1, hex2color('#e37222'))]
-    )
-    sym_colours.set_bad('k')
-    register_cmap(sym_colours.name, cmap=sym_colours)
-
-    # linestyle sequence for multiplots
-    linestyles = np.tile(['-', '--', '-.', ':'], 1 + discrete_colours.N // 4)[:discrete_colours.N]
-
     def __init__(self, output='paper', rc_spec={}, font_scale=2):
         """
             Initialise an instance of AwesomePlot.
@@ -119,6 +85,40 @@ class AwesomePlot(object):
 
         seaborn.set_style(style="white", rc=self.rc)
         seaborn.set_context(output, font_scale=font_scale, rc=self.rc)
+
+        # predefine colour maps:
+
+        # generic discrete cmap (10 items)
+        self.discrete_colours = ListedColormap(
+            np.array(
+                ['#1f77b4', '#33a02c', '#ff7f00', '#6a3d9a', '#e31a1c', '#a6cee3', '#b2df8a', '#fb9a99', '#fdbf6f', '#cab2d6']),
+            'discrete'
+        )
+        register_cmap('discrete', cmap=self.discrete_colours)
+
+        # PIK discrete cmap (4 items)
+        self.pik_colours = ListedColormap(
+            np.array(['#F25B28', '#009FDA', '#69923A', '#686C70']),
+            'pik'
+        )
+        register_cmap(self.pik_colours.name, cmap=self.pik_colours)
+
+        # linear interpolated cmap (based on PIK colours)
+        self.lin_colours = LinearSegmentedColormap.from_list(
+            'linear', [(0, 'w'), (1, hex2color('#e37222'))]
+        )
+        self.lin_colours.set_bad(hex2color('#8e908f'))
+        register_cmap(self.lin_colours.name, cmap=self.lin_colours)
+
+        # symmetric interpolated cmap (based on PIK colours)
+        self.sym_colours = LinearSegmentedColormap.from_list(
+            'sym', [(0, hex2color('#009fda')), (0.5, hex2color('#8e908f')), (1, hex2color('#e37222'))]
+        )
+        self.sym_colours.set_bad('k')
+        register_cmap(self.sym_colours.name, cmap=self.sym_colours)
+
+        # linestyle sequence for multiplots
+        self.linestyles = np.tile(['-', '--', '-.', ':'], 1 + self.discrete_colours.N // 4)[:self.discrete_colours.N]
 
         self.set_default_colours('pik')
 
@@ -462,7 +462,7 @@ class AwesomePlot(object):
 
         return fig
 
-    def add_network(self, adjacency, styles={}, sym=True, axis_labels=None, labels=False, height=False,node_cb=True, cmap="copper"):
+    def add_network(self, adjacency, styles={}, sym=True, axis_labels=None, vertex_labels=None, labels=False, height=False,node_cb=True, cmap=None):
         """
             Plots network, submit eg vertex color values via styles={"vertex_color":values}
 
@@ -497,10 +497,13 @@ class AwesomePlot(object):
             edgelist = np.vstack(np.where(adjacency > 0)).transpose()
             edgelist = sorted(set([tuple(np.sort(edgelist[i])) for i in range(len(edgelist))]))
 
-        if sym:
-            cmap = pyplot.get_cmap("sym")
+        if cmap is None:
+            if sym:
+                cmap = pyplot.get_cmap("sym")
+            else:
+                cmap = pyplot.get_cmap("linear")
         else:
-            cmap = pyplot.get_cmap("linear")
+            print "Argument 'sym' overwritten by given 'cmap'."
 
         visual_style = dict(
             edge_color=np.repeat('#8e908f', len(edgelist)),
@@ -519,7 +522,6 @@ class AwesomePlot(object):
                 visual_style["layout"] = np.random.random([N, 2])
             print "Assign random layout for plotting."
 
-        map_edges = pyplot.get_cmap(name=cmap)
 
         if visual_style.has_key("edge_color_dict"):
             min_color = np.min(visual_style["edge_color_dict"].values())
@@ -556,6 +558,7 @@ class AwesomePlot(object):
                     lw=visual_style["edge_width"],
                     alpha=alpha,
                     zorder=1)
+
         #TODO: edge colorbar
         #if visual_style.has_key("edge_color_dict"):
         #    sm = pyplot.cm.ScalarMappable(cmap=map_edges, norm=pyplot.Normalize(vmin= min_color, vmax= max_color))
