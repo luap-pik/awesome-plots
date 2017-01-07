@@ -462,7 +462,7 @@ class AwesomePlot(object):
 
         return fig
 
-    def add_network(self, adjacency, styles={}, sym=True, axis_labels=None, vertex_labels=None, labels=False, height=False,node_cb=True, cmap="copper"):
+    def add_network(self, adjacency, styles={}, sym=True, axis_labels=None, vertex_labels=None, labels=False, height=False,node_cb=True, cmap=None):
         """
             Plots network, submit eg vertex color values via styles={"vertex_color":values}
 
@@ -497,10 +497,13 @@ class AwesomePlot(object):
             edgelist = np.vstack(np.where(adjacency > 0)).transpose()
             edgelist = sorted(set([tuple(np.sort(edgelist[i])) for i in range(len(edgelist))]))
 
-        if sym:
-            cmap = pyplot.get_cmap("sym")
+        if cmap is None:
+            if sym:
+                cmap = pyplot.get_cmap("sym")
+            else:
+                cmap = pyplot.get_cmap("linear")
         else:
-            cmap = pyplot.get_cmap("linear")
+            print "Argument 'sym' overwritten by given 'cmap'."
 
         visual_style = dict(
             edge_color=np.repeat('#8e908f', len(edgelist)),
@@ -519,7 +522,6 @@ class AwesomePlot(object):
                 visual_style["layout"] = np.random.random([N, 2])
             print "Assign random layout for plotting."
 
-        map_edges = pyplot.get_cmap(name=cmap)
 
         if visual_style.has_key("edge_color_dict"):
             min_color = np.min(visual_style["edge_color_dict"].values())
@@ -556,6 +558,7 @@ class AwesomePlot(object):
                     lw=visual_style["edge_width"],
                     alpha=alpha,
                     zorder=1)
+
         #TODO: edge colorbar
         #if visual_style.has_key("edge_color_dict"):
         #    sm = pyplot.cm.ScalarMappable(cmap=map_edges, norm=pyplot.Normalize(vmin= min_color, vmax= max_color))
