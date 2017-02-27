@@ -257,7 +257,8 @@ class Plot(object):
 
         return fig
 
-    def add_contour(self, x, y, z, labels=['x', 'y', 'z'], nlevel=10, sym=False, text=False, horizontal=False, pi=None, layout=True, fixed_scale=None):
+    def add_contour(self, x, y, z, labels=['x', 'y', 'z'], nlevel=10, sym=False, text=False, horizontal=False, pi=None,
+                    layout=True, fixed_scale=None):
         """
             Plots Contourplots
 
@@ -292,7 +293,7 @@ class Plot(object):
 
         # Issue warning if z contains NaN or Inf
         if not np.isfinite(z).all():
-            warnings.warn("Attention: z is not finite.")
+            warnings.warn("Since z is not finite, it would be better to use layout=False.")
 
         if sym:
             cmap = pyplot.get_cmap('sym')
@@ -316,24 +317,26 @@ class Plot(object):
         if not fixed_scale is None:
             zmin, zmax = fixed_scale
         else:
-            zmin = np.floor(z[np.isfinite(z)].min())
+            zmin = z[np.isfinite(z)].min()
             zmax = z[np.isfinite(z)].max()
-
-            if zmax > 0.5:
+            if zmax - zmin >= 1:
+                zmin = np.floor(z[np.isfinite(z)].min())
                 zmax = np.ceil(z[np.isfinite(z)].max())
-
-            if zmin == zmax:
+            elif zmin == zmax:
                 zmax += 0.5
 
-        pyplot.gca().patch.set_color('#8e908f')  # print the Nan/inf Values in black)
+        if np.isnan(z).any() or not np.isfinite(z).all():
+            print "z contains Nan values of Infinte Numbers"
+
+        pyplot.gca().patch.set_color('#8e908f')  # print the Nan/inf Values in grey)
 
         if layout:
             levels = np.linspace(zmin, zmax, nlevel + 1, endpoint=True)
             c = ax.contourf(x, y, z, levels=levels, cmap=cmap, origin='lower', antialiased=True, vmin=zmin, vmax=zmax)
             cl = ax.contour(x, y, z, colors='k', levels=levels)
         else:
-            c = ax.contourf(x, y, z, cmap=cmap, origin='lower', antialiased=True, vmin=zmin, vmax=zmax)
-            cl = ax.contour(x, y, z, colors='k')
+            c = ax.contourf(x, y, z, cmap=cmap)
+            # cl = ax.contour(x, y, z, colors='k')
 
         if text:
             ax.clabel(cl, fontsize=.25 * self.textsize, inline=1)
