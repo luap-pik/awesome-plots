@@ -368,7 +368,77 @@ class Plot(object):
         matplotlib.rcParams['lines.linewidth'] = backup
 
         return fig
+    def add_contour_4d(self, x, y, z, v, labels=['x', 'y', 'z']):
+        """
+            Plots Contourplots
 
+            Parameters
+            ----------
+            x: array
+                x-values associated to the entries in z
+            y: array
+                y-values associated to the entries in z
+            z: matrix
+                data of shape [len(x), len(y)] containing values for all (x, y) pairs
+            v: matrix
+             data of shape [len(x), len(y)] containing values for all (x, y) pairs
+
+        """
+
+        assert len(labels) == 3
+
+
+        cmap = pyplot.get_cmap('linear')
+
+        backup = matplotlib.rcParams['lines.linewidth']
+        matplotlib.rcParams['lines.linewidth'] = 1
+
+        # determine boundaries
+
+        xmin = x.min()
+        xmax = x.max()
+        ymin = y.min()
+        ymax = y.max()
+
+        fig = pyplot.figure()
+
+
+        zmin = z[np.isfinite(z)].min()
+        zmax = z[np.isfinite(z)].max()
+        if zmax-zmin>=1:
+            zmin = np.floor(z[np.isfinite(z)].min())
+            zmax = np.ceil(z[np.isfinite(z)].max())
+        elif zmin == zmax:
+            zmax += 0.5
+
+
+        pyplot.gca().patch.set_color('#8e908f')  # print the Nan/inf Values in grey)
+
+        ax = fig.add_subplot(111, projection='3d')
+        ax.view_init(45, 60)
+
+        x, y = np.meshgrid(x, y)
+        c = ax.plot_surface(x, y, z, cmap = cmap, facecolors=cm.Oranges(v) )
+
+        ax.axis([xmin, xmax, ymin, ymax])
+
+        ax.set_xlabel(labels[0])
+        ax.set_ylabel(labels[1])
+
+
+
+        pyplot.show()
+
+
+        #fig.colorbar(c, label=labels[2] )
+
+        self.figures.append(fig)
+
+        matplotlib.rcParams['lines.linewidth'] = backup
+
+
+
+        return fig
 
     def add_scatterplot(self, x, y, labels=['x', 'y'], factor=None, show_annot=None, bins=20, kind="scatter", kdeplot=False, c_map="linear"):
         assert len(labels) == 2
