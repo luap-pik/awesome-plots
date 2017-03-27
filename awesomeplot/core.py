@@ -403,7 +403,7 @@ class AwesomePlot(object):
                 c = factor
 
         settings = {
-            "joint_kws": dict(alpha=1, c=c, cmap=pyplot.get_cmap(c_map)),
+            "joint_kws": dict(alpha=1, color=c, cmap=pyplot.get_cmap(c_map)),
             "marginal_kws": dict(bins=bins, rug=False),
             "annot_kws": dict(stat=None, frameon=True, loc="best", handlelength=0),
             "space": 0.1,
@@ -485,6 +485,9 @@ class AwesomePlot(object):
         """
         if height:
             from mpl_toolkits.mplot3d import Axes3D
+            from mpl_toolkits.mplot3d.art3d import Line3DCollection as LineCollection
+        else:
+            from matplotlib.collections import LineCollection
         from scipy.sparse import issparse, isspmatrix_dok
 
         if issparse(adjacency):
@@ -496,6 +499,9 @@ class AwesomePlot(object):
             N = len(adjacency)
             edgelist = np.vstack(np.where(adjacency > 0)).transpose()
             edgelist = sorted(set([tuple(np.sort(edgelist[i])) for i in range(len(edgelist))]))
+
+        source = [e[0] for e in edgelist]
+        target = [e[1] for e in edgelist]
 
         if cmap is None:
             if sym:
@@ -527,8 +533,7 @@ class AwesomePlot(object):
             min_color = np.min(visual_style["edge_color_dict"].values())
             max_color = np.max(visual_style["edge_color_dict"].values())
             f = lambda x: (np.float(visual_style["edge_color"][x]) - min_color) / (max_color - min_color)
-            for i, e in enumerate(edgelist):
-                visual_style["edge_color"][i] = f(e)
+            visual_style["edge_color"] = [f(e) for e in edgelist]
             alpha = 1.
         else:
             alpha = 0.4
@@ -546,18 +551,28 @@ class AwesomePlot(object):
 
         # ax.axis("off")
 
-        for i, e in enumerate(edgelist):
-            edge = np.vstack((visual_style["layout"][e[0]], visual_style["layout"][e[1]]))
-            if height:
-                xyz = edge[:, 0], edge[:, 1], edge[:, 2]
-            else:
-                xyz = edge[:, 0], edge[:, 1]
-            ax.plot(*xyz,
-                    color=visual_style["edge_color"][i],
-                    linestyle='-',
-                    lw=visual_style["edge_width"],
-                    alpha=alpha,
-                    zorder=1)
+        if height:
+            xyz = (np.asarray(((visual_style["layout"][source, 0],
+                               visual_style["layout"][source, 1],
+                               visual_style["layout"][source, 2]),
+                              (visual_style["layout"][target, 0],
+                               visual_style["layout"][target, 1],
+                               visual_style["layout"][target, 2]))
+                             ).transpose(2, 0, 1))
+        else:
+            xyz = (np.asarray(((visual_style["layout"][source, 0],
+                                visual_style["layout"][source, 1]),
+                               (visual_style["layout"][target, 0],
+                                visual_style["layout"][target, 1]))
+                              ).transpose(2, 0, 1))
+        l_collection = LineCollection(xyz,
+                                        linewidths=visual_style["edge_width"],
+                                        antialiaseds=(1,),
+                                        colors=visual_style["edge_color"],
+                                        alpha=alpha,
+                                        zorder=1,
+                                        transOffset=ax.transData)
+        ax.add_collection(l_collection)
 
         #TODO: edge colorbar
         #if visual_style.has_key("edge_color_dict"):

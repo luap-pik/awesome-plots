@@ -46,7 +46,7 @@ def test_case():
 
     p.add_network(A, height=True, styles={"vertex_color": np.random.random(100), "layout": layout})
 
-    # p.show()
+    p.show()
 
     p.save(["test/o" + str(i) for i in range(len(p.figures))])
 
@@ -92,7 +92,7 @@ if __name__ == "__main__":
     if not os.path.exists("test"):
         os.mkdir("test")
     test_case()
-    test_pandas()
+    #test_pandas()
 
 
 
