@@ -859,7 +859,7 @@ class AddonPandas(object):
 
         return fig
 
-    def __scatterplotPD(self, df, x, y, factor=None, bins=20, show_annot=None, kind="scatter", kdeplot=False, c_map="linear"):
+    def add_scatterplot(self, df, x, y, factor=None, bins=20, show_annot=None, kind="scatter", kdeplot=False, c_map="linear"):
 
         # FIXME: check, whether x and y are columns of df
         assert isinstance(x, basestring)
@@ -913,7 +913,7 @@ class AddonPandas(object):
 
         return fig
 
-    def __histplotPD(self, df, columns=None, normed=True, nbins=20, log=False, c_map="pik"):
+    def add_hist(self, df, columns=None, normed=True, nbins=20, log=False, c_map="pik"):
 
         if columns:
             df = df[columns]
@@ -934,6 +934,8 @@ class AddonPandas(object):
 
         return fig
 
+class PandasPlot(AddonPandas,Plot):
+    pass
 
 
 if __name__ == "__main__":

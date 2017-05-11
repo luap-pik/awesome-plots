@@ -53,12 +53,10 @@ def test_case():
 
 
 def test_pandas():
-    from awesomeplot.core import AddonPandas
+    from awesomeplot.core import PandasPlot
 
-    p = AddonPandas.talk(use_pandas=True)
-    assert isinstance(p, AddonPandas)
-
-    assert p.use_pandas == True
+    p = PandasPlot.talk()
+    assert isinstance(p, PandasPlot)
 
     p.set_default_colours("pik")
 
@@ -92,7 +90,7 @@ if __name__ == "__main__":
     if not os.path.exists("test"):
         os.mkdir("test")
     test_case()
-    #test_pandas()
+    test_pandas()
 
 
 
