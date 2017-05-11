@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 __author__ = "Paul Schultz"
-__date__ = "Nov 6, 2016"
-__version__ = "v2.1"
+__date__ = "May 11, 2017"
+__version__ = "v2.2"
 
 """
 Module contains class AwesomePlot.
