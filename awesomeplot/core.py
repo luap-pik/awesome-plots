@@ -38,7 +38,7 @@ import warnings
 
 # TODO: optional fig,ax objects as arguments: add_*(..., figax=None): fig, ax = figax
 
-class AwesomePlot(object):
+class Plot(object):
     """
     AwesomePlot class.
 
@@ -123,6 +123,97 @@ class AwesomePlot(object):
         self.set_default_colours('pik')
 
         self.figures = []
+
+    @classmethod
+    def paper(cls, font_scale=1.2):
+        """
+        Class method yielding an AwesomePlot instance of type "paper"
+
+        Parameters
+        ----------
+        cls: object
+            AwesomePlot class
+
+        Returns
+        -------
+        instance of class AwesomePlot
+
+        """
+
+        rc = dict()
+        rc['figure.figsize'] = (11.69, 8.268)  # A4
+        rc['pdf.compression'] = 6  # 0 to 9
+        rc['savefig.format'] = 'pdf'
+        rc['pdf.fonttype'] = 42
+        rc['savefig.dpi'] = 300
+
+        return cls(output='paper', rc_spec=rc, font_scale=font_scale)
+
+    @classmethod
+    def talk(cls, font_scale=1.2):
+        """
+        Class method yielding an AwesomePlot instance of type "talk"
+
+        Parameters
+        ----------
+        cls: object
+            AwesomePlot class
+
+        Returns
+        -------
+        instance of class AwesomePlot
+
+        """
+        rc = dict()
+        rc['figure.figsize'] = (8.268, 5.872)  # A5
+        rc['savefig.format'] = 'png'
+        rc['savefig.dpi'] = 300
+
+        return cls(output='talk', rc_spec=rc, font_scale=font_scale)
+
+    @classmethod
+    def poster(cls, font_scale=1.2):
+        """
+        Class method yielding an AwesomePlot instance of type "poster"
+
+        Parameters
+        ----------
+        cls: object
+            AwesomePlot class
+
+        Returns
+        -------
+        instance of class AwesomePlot
+
+        """
+
+        rc = dict()
+        rc['savefig.format'] = 'png'
+        rc['savefig.dpi'] = 300
+
+        return cls(output='poster', rc_spec=rc, font_scale=font_scale)
+
+    @classmethod
+    def notebook(cls, font_scale=1.2):
+        """
+        Class method yielding an AwesomePlot instance of type "notebook"
+
+        Parameters
+        ----------
+        cls: object
+            AwesomePlot class
+
+        Returns
+        -------
+        instance of class AwesomePlot
+
+        """
+
+        rc = dict()
+        rc['savefig.format'] = 'png'
+        rc['savefig.dpi'] = 300
+
+        return cls(output='notebook', rc_spec=rc, font_scale=font_scale)
 
     ###############################################################################
     # ##                       PUBLIC FUNCTIONS                                ## #
@@ -717,7 +808,7 @@ class AwesomePlot(object):
             raise ValueError("Invalid input. Must be x, y, or xy.")
 
 
-class Plot(AwesomePlot):
+class AddonPandas(object):
     """
     Plot class.
 
@@ -731,125 +822,14 @@ class Plot(AwesomePlot):
     Images are landscape per default.
     """
 
-    def __init__(self, output='paper', rc_spec={}, font_scale=1.1, use_pandas=False):
-        super(Plot, self).__init__(output, rc_spec, font_scale)
-        self.use_pandas = use_pandas
-
-
-    @classmethod
-    def paper(cls, font_scale=1.2, use_pandas=False):
-        """
-        Class method yielding an AwesomePlot instance of type "paper"
-
-        Parameters
-        ----------
-        cls: object
-            AwesomePlot class
-
-        Returns
-        -------
-        instance of class AwesomePlot
-
-        """
-
-        rc = dict()
-        rc['figure.figsize'] = (11.69, 8.268)  # A4
-        rc['pdf.compression'] = 6  # 0 to 9
-        rc['savefig.format'] = 'pdf'
-        rc['pdf.fonttype'] = 42
-        rc['savefig.dpi'] = 300
-
-
-        return cls(output='paper', rc_spec=rc, font_scale=font_scale, use_pandas=use_pandas)
-
-    @classmethod
-    def talk(cls, font_scale=1.2, use_pandas=False):
-        """
-        Class method yielding an AwesomePlot instance of type "talk"
-
-        Parameters
-        ----------
-        cls: object
-            AwesomePlot class
-
-        Returns
-        -------
-        instance of class AwesomePlot
-
-        """
-        rc = dict()
-        rc['figure.figsize'] = (8.268, 5.872)  # A5
-        rc['savefig.format'] = 'png'
-        rc['savefig.dpi'] = 300
-
-        return cls(output='talk', rc_spec=rc, font_scale=font_scale, use_pandas=use_pandas)
-
-    @classmethod
-    def poster(cls, font_scale=1.2, use_pandas=False):
-        """
-        Class method yielding an AwesomePlot instance of type "poster"
-
-        Parameters
-        ----------
-        cls: object
-            AwesomePlot class
-
-        Returns
-        -------
-        instance of class AwesomePlot
-
-        """
-
-        rc = dict()
-        rc['savefig.format'] = 'png'
-        rc['savefig.dpi'] = 300
-
-        return cls(output='poster', rc_spec=rc, font_scale=font_scale, use_pandas=use_pandas)
-
-    @classmethod
-    def notebook(cls, font_scale=1.2, use_pandas=False):
-        """
-        Class method yielding an AwesomePlot instance of type "notebook"
-
-        Parameters
-        ----------
-        cls: object
-            AwesomePlot class
-
-        Returns
-        -------
-        instance of class AwesomePlot
-
-        """
-
-        rc = dict()
-        rc['savefig.format'] = 'png'
-        rc['savefig.dpi'] = 300
-
-        return cls(output='notebook', rc_spec=rc, font_scale=font_scale, use_pandas=use_pandas)
+    # def __init__(self, output='paper', rc_spec={}, font_scale=1.1, use_pandas=False):
+    #     super(AddonPandas, self).__init__(output, rc_spec, font_scale)
+    #     self.use_pandas = use_pandas
 
 
     ###############################################################################
     # ##                       PUBLIC FUNCTIONS                                ## #
     ###############################################################################
-
-    def add_lineplot(self, *args, **kwargs):
-        if self.use_pandas:
-            return self.__lineplotPD(*args, **kwargs)
-        else:
-            return super(Plot, self).add_lineplot(*args, **kwargs)
-
-    def add_scatterplot(self, *args, **kwargs):
-        if self.use_pandas:
-            return self.__scatterplotPD(*args, **kwargs)
-        else:
-            return super(Plot, self).add_scatterplot(*args, **kwargs)
-
-    def add_hist(self, *args, **kwargs):
-        if self.use_pandas:
-            return self.__histplotPD(*args, **kwargs)
-        else:
-            return super(Plot, self).add_hist(*args, **kwargs)
 
     @staticmethod
     def df_to_dict(df):
@@ -867,7 +847,7 @@ class Plot(AwesomePlot):
     ###############################################################################
 
 
-    def __lineplotPD(self, df, firstcol=False, legend=True, grid=True, logx=False, logy=False, loglog=False):
+    def add_lineplot(self, df, firstcol=False, legend=True, grid=True, logx=False, logy=False, loglog=False):
         # transfer x-values to dataframe index
         if firstcol:
             df.index = df[df.columns[0]]
@@ -894,7 +874,7 @@ class Plot(AwesomePlot):
 
         return fig
 
-    def __scatterplotPD(self, df, x, y, factor=None, bins=20, show_annot=None, kind="scatter", kdeplot=False, c_map="linear"):
+    def add_scatterplot(self, df, x, y, factor=None, bins=20, show_annot=None, kind="scatter", kdeplot=False, c_map="linear"):
 
         # FIXME: check, whether x and y are columns of df
         assert isinstance(x, basestring)
@@ -948,7 +928,7 @@ class Plot(AwesomePlot):
 
         return fig
 
-    def __histplotPD(self, df, columns=None, normed=True, nbins=20, log=False, c_map="pik"):
+    def add_hist(self, df, columns=None, normed=True, nbins=20, log=False, c_map="pik"):
 
         if columns:
             df = df[columns]
@@ -969,6 +949,8 @@ class Plot(AwesomePlot):
 
         return fig
 
+class PandasPlot(AddonPandas,Plot):
+    pass
 
 
 if __name__ == "__main__":
