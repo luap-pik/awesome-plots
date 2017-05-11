@@ -29,7 +29,7 @@ def test_case():
 
     p.add_scatterplot(y, u[:, 1]**2, labels=label, kdeplot=True)
 
-    p.add_lineplot(x=x, lines=p.df_to_dict(df[["y", "y2"]]))
+    p.add_lineplot(x=x, lines={"y":df.y, "y2": df.y2})
 
     p.add_hist(data=zip(*u))
 
@@ -53,10 +53,10 @@ def test_case():
 
 
 def test_pandas():
-    from awesomeplot.core import Plot
+    from awesomeplot.core import AddonPandas
 
-    p = Plot.talk(use_pandas=True)
-    assert isinstance(p, Plot)
+    p = AddonPandas.talk(use_pandas=True)
+    assert isinstance(p, AddonPandas)
 
     assert p.use_pandas == True
 
@@ -92,7 +92,7 @@ if __name__ == "__main__":
     if not os.path.exists("test"):
         os.mkdir("test")
     test_case()
-    test_pandas()
+    #test_pandas()
 
 
 
