@@ -284,7 +284,7 @@ class Plot(object):
         if grid:
             ax.grid()
 
-        for i in sorted(lines.keys(), key=sortfunc, reverse=True):
+        for i in sorted(lines.keys(), key=sortfunc, reverse=False):
             if shades:
                 shade = ax.fill_between(x, shades[i][0], shades[i][1], alpha=0.3, edgecolor='none',
                                         facecolor=hex2color('#8E908F'))
@@ -514,14 +514,13 @@ class Plot(object):
 
         return scatter.fig
 
-    def add_hist(self, data, label='x', nbins=20):
+    def add_hist(self, data, label='x', nbins=20, sortfunc=None, legend=True):
 
-        # ensure data is nested list
-        if isinstance(data[0], (int, float)):
-            data = list([data, ])
+        # ensure data is dict
+        assert isinstance(data, dict)
 
-        xmin = np.min([np.min(l) for l in data])
-        xmax = np.max([np.max(l) for l in data])
+        xmin = np.min([np.min(l) for l in data.values()])
+        xmax = np.max([np.max(l) for l in data.values()])
 
         xmargin = (xmax - xmin) / 100.
 
@@ -532,12 +531,12 @@ class Plot(object):
         bottom = np.zeros(nbins)
         ymax = 0.
         counter = 0
-        _, b = np.histogram(data[0], bins=nbins, density=True)
-        for d in data:
+        _, b = np.histogram(data[data.keys()[0]], bins=nbins, density=True)
+        for d in sorted(data.keys(), key=sortfunc, reverse=False):
             c = list(matplotlib.rcParams['axes.prop_cycle'])[counter]['color']
-            h, _ = np.histogram(d, bins=nbins, density=True)
+            h, _ = np.histogram(data[d], bins=nbins, density=True)
             ax.bar(.5 * (b[1:] + b[:-1]), h, bottom=bottom, color=c, edgecolor="none", align='center', zorder=1,
-                   width=(xmax - xmin) / (nbins * 1.5))
+                   width=(xmax - xmin) / (nbins * 1.5), label=d)
             bottom += h
             counter += 1
             ymax += h.max()
@@ -548,6 +547,10 @@ class Plot(object):
         ax.set_ylabel(r'density')
 
         ax.yaxis.grid(color='w', linestyle='-', zorder=2)
+
+        if legend:
+            pyplot.legend(frameon=True)
+        fig.tight_layout()
 
         self.figures.append(fig)
 

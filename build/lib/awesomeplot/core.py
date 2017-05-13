@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 __author__ = "Paul Schultz"
-__date__ = "Nov 6, 2016"
-__version__ = "v2.1"
+__date__ = "May 11, 2017"
+__version__ = "v2.2"
 
 """
 Module contains class AwesomePlot.
@@ -38,7 +38,7 @@ import warnings
 
 # TODO: optional fig,ax objects as arguments: add_*(..., figax=None): fig, ax = figax
 
-class AwesomePlot(object):
+class Plot(object):
     """
     AwesomePlot class.
 
@@ -124,6 +124,97 @@ class AwesomePlot(object):
 
         self.figures = []
 
+    @classmethod
+    def paper(cls, font_scale=1.2):
+        """
+        Class method yielding an AwesomePlot instance of type "paper"
+
+        Parameters
+        ----------
+        cls: object
+            AwesomePlot class
+
+        Returns
+        -------
+        instance of class AwesomePlot
+
+        """
+
+        rc = dict()
+        rc['figure.figsize'] = (11.69, 8.268)  # A4
+        rc['pdf.compression'] = 6  # 0 to 9
+        rc['savefig.format'] = 'pdf'
+        rc['pdf.fonttype'] = 42
+        rc['savefig.dpi'] = 300
+
+        return cls(output='paper', rc_spec=rc, font_scale=font_scale)
+
+    @classmethod
+    def talk(cls, font_scale=1.2):
+        """
+        Class method yielding an AwesomePlot instance of type "talk"
+
+        Parameters
+        ----------
+        cls: object
+            AwesomePlot class
+
+        Returns
+        -------
+        instance of class AwesomePlot
+
+        """
+        rc = dict()
+        rc['figure.figsize'] = (8.268, 5.872)  # A5
+        rc['savefig.format'] = 'png'
+        rc['savefig.dpi'] = 300
+
+        return cls(output='talk', rc_spec=rc, font_scale=font_scale)
+
+    @classmethod
+    def poster(cls, font_scale=1.2):
+        """
+        Class method yielding an AwesomePlot instance of type "poster"
+
+        Parameters
+        ----------
+        cls: object
+            AwesomePlot class
+
+        Returns
+        -------
+        instance of class AwesomePlot
+
+        """
+
+        rc = dict()
+        rc['savefig.format'] = 'png'
+        rc['savefig.dpi'] = 300
+
+        return cls(output='poster', rc_spec=rc, font_scale=font_scale)
+
+    @classmethod
+    def notebook(cls, font_scale=1.2):
+        """
+        Class method yielding an AwesomePlot instance of type "notebook"
+
+        Parameters
+        ----------
+        cls: object
+            AwesomePlot class
+
+        Returns
+        -------
+        instance of class AwesomePlot
+
+        """
+
+        rc = dict()
+        rc['savefig.format'] = 'png'
+        rc['savefig.dpi'] = 300
+
+        return cls(output='notebook', rc_spec=rc, font_scale=font_scale)
+
     ###############################################################################
     # ##                       PUBLIC FUNCTIONS                                ## #
     ###############################################################################
@@ -193,7 +284,7 @@ class AwesomePlot(object):
         if grid:
             ax.grid()
 
-        for i in sorted(lines.keys(), key=sortfunc, reverse=True):
+        for i in sorted(lines.keys(), key=sortfunc, reverse=False):
             if shades:
                 shade = ax.fill_between(x, shades[i][0], shades[i][1], alpha=0.3, edgecolor='none',
                                         facecolor=hex2color('#8E908F'))
@@ -403,7 +494,7 @@ class AwesomePlot(object):
                 c = factor
 
         settings = {
-            "joint_kws": dict(alpha=1, c=c, cmap=pyplot.get_cmap(c_map)),
+            "joint_kws": dict(alpha=1, color=c, cmap=pyplot.get_cmap(c_map)),
             "marginal_kws": dict(bins=bins, rug=False),
             "annot_kws": dict(stat=None, frameon=True, loc="best", handlelength=0),
             "space": 0.1,
@@ -423,14 +514,13 @@ class AwesomePlot(object):
 
         return scatter.fig
 
-    def add_hist(self, data, label='x', nbins=20):
+    def add_hist(self, data, label='x', nbins=20, sortfunc=None, legend=True):
 
-        # ensure data is nested list
-        if isinstance(data[0], (int, float)):
-            data = list([data, ])
+        # ensure data is dict
+        assert isinstance(data, dict)
 
-        xmin = np.min([np.min(l) for l in data])
-        xmax = np.max([np.max(l) for l in data])
+        xmin = np.min([np.min(l) for l in data.values()])
+        xmax = np.max([np.max(l) for l in data.values()])
 
         xmargin = (xmax - xmin) / 100.
 
@@ -441,12 +531,12 @@ class AwesomePlot(object):
         bottom = np.zeros(nbins)
         ymax = 0.
         counter = 0
-        _, b = np.histogram(data[0], bins=nbins, density=True)
-        for d in data:
+        _, b = np.histogram(data[data.keys()[0]], bins=nbins, density=True)
+        for d in sorted(data.keys(), key=sortfunc, reverse=False):
             c = list(matplotlib.rcParams['axes.prop_cycle'])[counter]['color']
-            h, _ = np.histogram(d, bins=nbins, density=True)
+            h, _ = np.histogram(data[d], bins=nbins, density=True)
             ax.bar(.5 * (b[1:] + b[:-1]), h, bottom=bottom, color=c, edgecolor="none", align='center', zorder=1,
-                   width=(xmax - xmin) / (nbins * 1.5))
+                   width=(xmax - xmin) / (nbins * 1.5), label=d)
             bottom += h
             counter += 1
             ymax += h.max()
@@ -457,6 +547,10 @@ class AwesomePlot(object):
         ax.set_ylabel(r'density')
 
         ax.yaxis.grid(color='w', linestyle='-', zorder=2)
+
+        if legend:
+            pyplot.legend(frameon=True)
+        fig.tight_layout()
 
         self.figures.append(fig)
 
@@ -485,6 +579,9 @@ class AwesomePlot(object):
         """
         if height:
             from mpl_toolkits.mplot3d import Axes3D
+            from mpl_toolkits.mplot3d.art3d import Line3DCollection as LineCollection
+        else:
+            from matplotlib.collections import LineCollection
         from scipy.sparse import issparse, isspmatrix_dok
 
         if issparse(adjacency):
@@ -496,6 +593,9 @@ class AwesomePlot(object):
             N = len(adjacency)
             edgelist = np.vstack(np.where(adjacency > 0)).transpose()
             edgelist = sorted(set([tuple(np.sort(edgelist[i])) for i in range(len(edgelist))]))
+
+        source = [e[0] for e in edgelist]
+        target = [e[1] for e in edgelist]
 
         if cmap is None:
             if sym:
@@ -527,8 +627,7 @@ class AwesomePlot(object):
             min_color = np.min(visual_style["edge_color_dict"].values())
             max_color = np.max(visual_style["edge_color_dict"].values())
             f = lambda x: (np.float(visual_style["edge_color"][x]) - min_color) / (max_color - min_color)
-            for i, e in enumerate(edgelist):
-                visual_style["edge_color"][i] = f(e)
+            visual_style["edge_color"] = [f(e) for e in edgelist]
             alpha = 1.
         else:
             alpha = 0.4
@@ -546,18 +645,28 @@ class AwesomePlot(object):
 
         # ax.axis("off")
 
-        for i, e in enumerate(edgelist):
-            edge = np.vstack((visual_style["layout"][e[0]], visual_style["layout"][e[1]]))
-            if height:
-                xyz = edge[:, 0], edge[:, 1], edge[:, 2]
-            else:
-                xyz = edge[:, 0], edge[:, 1]
-            ax.plot(*xyz,
-                    color=visual_style["edge_color"][i],
-                    linestyle='-',
-                    lw=visual_style["edge_width"],
-                    alpha=alpha,
-                    zorder=1)
+        if height:
+            xyz = (np.asarray(((visual_style["layout"][source, 0],
+                               visual_style["layout"][source, 1],
+                               visual_style["layout"][source, 2]),
+                              (visual_style["layout"][target, 0],
+                               visual_style["layout"][target, 1],
+                               visual_style["layout"][target, 2]))
+                             ).transpose(2, 0, 1))
+        else:
+            xyz = (np.asarray(((visual_style["layout"][source, 0],
+                                visual_style["layout"][source, 1]),
+                               (visual_style["layout"][target, 0],
+                                visual_style["layout"][target, 1]))
+                              ).transpose(2, 0, 1))
+        l_collection = LineCollection(xyz,
+                                        linewidths=visual_style["edge_width"],
+                                        antialiaseds=(1,),
+                                        colors=visual_style["edge_color"],
+                                        alpha=alpha,
+                                        zorder=1,
+                                        transOffset=ax.transData)
+        ax.add_collection(l_collection)
 
         #TODO: edge colorbar
         #if visual_style.has_key("edge_color_dict"):
@@ -702,7 +811,7 @@ class AwesomePlot(object):
             raise ValueError("Invalid input. Must be x, y, or xy.")
 
 
-class Plot(AwesomePlot):
+class AddonPandas(object):
     """
     Plot class.
 
@@ -716,125 +825,14 @@ class Plot(AwesomePlot):
     Images are landscape per default.
     """
 
-    def __init__(self, output='paper', rc_spec={}, font_scale=1.1, use_pandas=False):
-        super(Plot, self).__init__(output, rc_spec, font_scale)
-        self.use_pandas = use_pandas
-
-
-    @classmethod
-    def paper(cls, font_scale=1.2, use_pandas=False):
-        """
-        Class method yielding an AwesomePlot instance of type "paper"
-
-        Parameters
-        ----------
-        cls: object
-            AwesomePlot class
-
-        Returns
-        -------
-        instance of class AwesomePlot
-
-        """
-
-        rc = dict()
-        rc['figure.figsize'] = (11.69, 8.268)  # A4
-        rc['pdf.compression'] = 6  # 0 to 9
-        rc['savefig.format'] = 'pdf'
-        rc['pdf.fonttype'] = 42
-        rc['savefig.dpi'] = 300
-
-
-        return cls(output='paper', rc_spec=rc, font_scale=font_scale, use_pandas=use_pandas)
-
-    @classmethod
-    def talk(cls, font_scale=1.2, use_pandas=False):
-        """
-        Class method yielding an AwesomePlot instance of type "talk"
-
-        Parameters
-        ----------
-        cls: object
-            AwesomePlot class
-
-        Returns
-        -------
-        instance of class AwesomePlot
-
-        """
-        rc = dict()
-        rc['figure.figsize'] = (8.268, 5.872)  # A5
-        rc['savefig.format'] = 'png'
-        rc['savefig.dpi'] = 300
-
-        return cls(output='talk', rc_spec=rc, font_scale=font_scale, use_pandas=use_pandas)
-
-    @classmethod
-    def poster(cls, font_scale=1.2, use_pandas=False):
-        """
-        Class method yielding an AwesomePlot instance of type "poster"
-
-        Parameters
-        ----------
-        cls: object
-            AwesomePlot class
-
-        Returns
-        -------
-        instance of class AwesomePlot
-
-        """
-
-        rc = dict()
-        rc['savefig.format'] = 'png'
-        rc['savefig.dpi'] = 300
-
-        return cls(output='poster', rc_spec=rc, font_scale=font_scale, use_pandas=use_pandas)
-
-    @classmethod
-    def notebook(cls, font_scale=1.2, use_pandas=False):
-        """
-        Class method yielding an AwesomePlot instance of type "notebook"
-
-        Parameters
-        ----------
-        cls: object
-            AwesomePlot class
-
-        Returns
-        -------
-        instance of class AwesomePlot
-
-        """
-
-        rc = dict()
-        rc['savefig.format'] = 'png'
-        rc['savefig.dpi'] = 300
-
-        return cls(output='notebook', rc_spec=rc, font_scale=font_scale, use_pandas=use_pandas)
+    # def __init__(self, output='paper', rc_spec={}, font_scale=1.1, use_pandas=False):
+    #     super(AddonPandas, self).__init__(output, rc_spec, font_scale)
+    #     self.use_pandas = use_pandas
 
 
     ###############################################################################
     # ##                       PUBLIC FUNCTIONS                                ## #
     ###############################################################################
-
-    def add_lineplot(self, *args, **kwargs):
-        if self.use_pandas:
-            return self.__lineplotPD(*args, **kwargs)
-        else:
-            return super(Plot, self).add_lineplot(*args, **kwargs)
-
-    def add_scatterplot(self, *args, **kwargs):
-        if self.use_pandas:
-            return self.__scatterplotPD(*args, **kwargs)
-        else:
-            return super(Plot, self).add_scatterplot(*args, **kwargs)
-
-    def add_hist(self, *args, **kwargs):
-        if self.use_pandas:
-            return self.__histplotPD(*args, **kwargs)
-        else:
-            return super(Plot, self).add_hist(*args, **kwargs)
 
     @staticmethod
     def df_to_dict(df):
@@ -852,7 +850,7 @@ class Plot(AwesomePlot):
     ###############################################################################
 
 
-    def __lineplotPD(self, df, firstcol=False, legend=True, grid=True, logx=False, logy=False, loglog=False):
+    def add_lineplot(self, df, firstcol=False, legend=True, grid=True, logx=False, logy=False, loglog=False):
         # transfer x-values to dataframe index
         if firstcol:
             df.index = df[df.columns[0]]
@@ -879,7 +877,7 @@ class Plot(AwesomePlot):
 
         return fig
 
-    def __scatterplotPD(self, df, x, y, factor=None, bins=20, show_annot=None, kind="scatter", kdeplot=False, c_map="linear"):
+    def add_scatterplot(self, df, x, y, factor=None, bins=20, show_annot=None, kind="scatter", kdeplot=False, c_map="linear"):
 
         # FIXME: check, whether x and y are columns of df
         assert isinstance(x, basestring)
@@ -933,7 +931,7 @@ class Plot(AwesomePlot):
 
         return fig
 
-    def __histplotPD(self, df, columns=None, normed=True, nbins=20, log=False, c_map="pik"):
+    def add_hist(self, df, columns=None, normed=True, nbins=20, log=False, c_map="pik"):
 
         if columns:
             df = df[columns]
@@ -954,6 +952,8 @@ class Plot(AwesomePlot):
 
         return fig
 
+class PandasPlot(AddonPandas,Plot):
+    pass
 
 
 if __name__ == "__main__":

@@ -31,7 +31,7 @@ def test_case():
 
     p.add_lineplot(x=x, lines={"y":df.y, "y2": df.y2})
 
-    p.add_hist(data=zip(*u))
+    p.add_hist(data={i: u[i] for i in range(u.shape[1])})
 
     import networkx as nx
     pos = np.random.random([100, 2])
