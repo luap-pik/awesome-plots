@@ -556,7 +556,7 @@ class Plot(object):
 
         return fig
 
-    def add_network(self, adjacency, styles={}, sym=True, axis_labels=None, vertex_labels=None, labels=False, height=False,node_cb=True, cmap=None):
+    def add_network(self, adjacency, styles={}, axis_labels=None, vertex_labels=None, labels=False, height=False, node_cb=False, edge_cb=False, node_cmap=None, edge_cmap=None):
         """
             Plots network, submit eg vertex color values via styles={"vertex_color":values}
 
@@ -597,13 +597,12 @@ class Plot(object):
         source = [e[0] for e in edgelist]
         target = [e[1] for e in edgelist]
 
-        if cmap is None:
-            if sym:
-                cmap = pyplot.get_cmap("sym")
-            else:
-                cmap = pyplot.get_cmap("linear")
-        else:
-            print "Argument 'sym' overwritten by given 'cmap'."
+        if node_cmap is None:
+            node_cmap = pyplot.get_cmap("linear")
+
+        if edge_cmap is None:
+            edge_cmap = pyplot.get_cmap("linear")
+
 
         visual_style = dict(
             edge_color=np.repeat('#8e908f', len(edgelist)),
@@ -630,7 +629,7 @@ class Plot(object):
             visual_style["edge_color"] = [f(e) for e in edgelist]
             alpha = 1.
         else:
-            alpha = 0.4
+            alpha = 1.
 
         if height:
             fig = pyplot.figure()
@@ -660,13 +659,18 @@ class Plot(object):
                                 visual_style["layout"][target, 1]))
                               ).transpose(2, 0, 1))
         l_collection = LineCollection(xyz,
-                                        linewidths=visual_style["edge_width"],
-                                        antialiaseds=(1,),
-                                        colors=visual_style["edge_color"],
-                                        alpha=alpha,
-                                        zorder=1,
-                                        transOffset=ax.transData)
+                                      linewidths=visual_style["edge_width"],
+                                      antialiaseds=(1,),
+                                      colors=visual_style["edge_color"],
+                                      cmap=edge_cmap,
+                                      alpha=alpha,
+                                      zorder=1,
+                                      transOffset=ax.transData)
         ax.add_collection(l_collection)
+
+        if edge_cb:
+            l_collection.set_array(np.empty(1))
+            cb = fig.colorbar(l_collection, orientation='horizontal', shrink=0.66, format=r"%.2f")
 
         #TODO: edge colorbar
         #if visual_style.has_key("edge_color_dict"):
@@ -691,14 +695,14 @@ class Plot(object):
             nodes = ax.scatter(*args,
                                c='#8e908f',
                                s=visual_style["vertex_size"],
-                               cmap=cmap,
+                               cmap=node_cmap,
                                edgecolor='w',
                                zorder=2)
         else:
             nodes = ax.scatter(*args,
                                c=visual_style["vertex_color"],
                                s=visual_style["vertex_size"],
-                               cmap=cmap,
+                               cmap=node_cmap,
                                vmin=np.floor(np.min(visual_style["vertex_color"])),
                                vmax=np.ceil(np.max(visual_style["vertex_color"])),
                                edgecolor='w',
