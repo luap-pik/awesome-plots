@@ -97,6 +97,7 @@ class Plot(object):
         register_cmap('discrete', cmap=self.discrete_colours)
 
         # PIK discrete cmap (4 items)
+        # alternative definition for orange: #e37222
         self.pik_colours = ListedColormap(
             np.array(['#F25B28', '#009FDA', '#69923A', '#686C70']),
             'pik'
@@ -105,14 +106,14 @@ class Plot(object):
 
         # linear interpolated cmap (based on PIK colours)
         self.lin_colours = LinearSegmentedColormap.from_list(
-            'linear', [(0, 'w'), (1, hex2color('#e37222'))]
+            'linear', [(0, 'w'), (1, hex2color(self.pik_colours.colors[0]))]
         )
         self.lin_colours.set_bad(hex2color('#8e908f'))
         register_cmap(self.lin_colours.name, cmap=self.lin_colours)
 
         # symmetric interpolated cmap (based on PIK colours)
         self.sym_colours = LinearSegmentedColormap.from_list(
-            'sym', [(0, hex2color('#009fda')), (0.5, hex2color('#8e908f')), (1, hex2color('#e37222'))]
+            'sym', [(0, hex2color(self.pik_colours.colors[1])), (0.5, hex2color('#8e908f')), (1, hex2color(self.pik_colours.colors[0]))]
         )
         self.sym_colours.set_bad('k')
         register_cmap(self.sym_colours.name, cmap=self.sym_colours)
