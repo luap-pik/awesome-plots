@@ -220,7 +220,7 @@ class Plot(object):
     ###############################################################################
 
 
-    def add_lineplot(self, x=None, lines={}, shades={}, labels=['x', 'y'], sortfunc=None, grid=False, layout=True, legend=True):
+    def add_lineplot(self, x=None, lines={}, shades={}, labels=['x', 'y'], marker="o", sortfunc=None, grid=False, infer_layout=True, legend=True):
         """
         Plots (multiple) lines with optional shading.
 
@@ -244,7 +244,7 @@ class Plot(object):
             e.g. (a) sortfunc = float (b) sortfunc=f, where f = lambda x: float(x.split()[-2])
         grid: bool
             if true, background grid is drawn
-        layout: bool
+        infer_layout: bool
             if false min and max will not be set , important for plots with NANs and Infs
         """
 
@@ -263,8 +263,8 @@ class Plot(object):
 
         fig, ax = pyplot.subplots(nrows=1, ncols=1)
 
-        # determine boundaries
-        if layout:
+        # determine boundaries and scale
+        if infer_layout:
             xmin = np.min(x)
             xmax = np.max(x)
             if not shades:
@@ -286,14 +286,16 @@ class Plot(object):
 
         for i in sorted(lines.keys(), key=sortfunc, reverse=False):
             if shades:
-                shade = ax.fill_between(x, shades[i][0], shades[i][1], alpha=0.3, edgecolor='none',
-                                        facecolor=hex2color('#8E908F'))
-                ax.plot(x, lines[i], marker='o', mew=3.*scale, mec=shade._facecolors[0], ms=10.*scale, label=i)
-            else:
-                if layout:
-                    ax.plot(x, lines[i], marker='o', mec='w', mew=3*scale, ms=10.*scale, label=i)
+                shade = ax.fill_between(x, shades[i][0], shades[i][1], alpha=0.3, edgecolor='none', facecolor=hex2color('#8E908F'))
+                if infer_layout:
+                    ax.plot(x, lines[i], marker=marker, mew=3.*scale, mec=shade._facecolors[0], ms=10.*scale, label=i)
                 else:
-                    ax.plot(x, lines[i], marker='o', mec='w', label=i)
+                    ax.plot(x, lines[i], marker=marker, mec=shade._facecolors[0], label=i)
+            else:
+                if infer_layout:
+                    ax.plot(x, lines[i], marker=marker, mec='w', mew=3*scale, ms=10.*scale, label=i)
+                else:
+                    ax.plot(x, lines[i], marker=marker, mec='w', label=i)
 
         ax.set_xlabel(labels[0])
         ax.set_ylabel(labels[1])
