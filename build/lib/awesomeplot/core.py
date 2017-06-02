@@ -97,7 +97,6 @@ class Plot(object):
         register_cmap('discrete', cmap=self.discrete_colours)
 
         # PIK discrete cmap (4 items)
-        # alternative definition for orange: #e37222
         self.pik_colours = ListedColormap(
             np.array(['#F25B28', '#009FDA', '#69923A', '#686C70']),
             'pik'
@@ -106,14 +105,14 @@ class Plot(object):
 
         # linear interpolated cmap (based on PIK colours)
         self.lin_colours = LinearSegmentedColormap.from_list(
-            'linear', [(0, 'w'), (1, hex2color(self.pik_colours.colors[0]))]
+            'linear', [(0, 'w'), (1, hex2color('#e37222'))]
         )
         self.lin_colours.set_bad(hex2color('#8e908f'))
         register_cmap(self.lin_colours.name, cmap=self.lin_colours)
 
         # symmetric interpolated cmap (based on PIK colours)
         self.sym_colours = LinearSegmentedColormap.from_list(
-            'sym', [(0, hex2color(self.pik_colours.colors[1])), (0.5, hex2color('#8e908f')), (1, hex2color(self.pik_colours.colors[0]))]
+            'sym', [(0, hex2color('#009fda')), (0.5, hex2color('#8e908f')), (1, hex2color('#e37222'))]
         )
         self.sym_colours.set_bad('k')
         register_cmap(self.sym_colours.name, cmap=self.sym_colours)
@@ -221,7 +220,7 @@ class Plot(object):
     ###############################################################################
 
 
-    def add_lineplot(self, x=None, lines={}, shades={}, labels=['x', 'y'], marker='o', sortfunc=None, grid=False, infer_layout=True, legend=True):
+    def add_lineplot(self, x=None, lines={}, shades={}, labels=['x', 'y'], marker="o", sortfunc=None, grid=False, infer_layout=True, legend=True):
         """
         Plots (multiple) lines with optional shading.
 
@@ -246,7 +245,7 @@ class Plot(object):
         grid: bool
             if true, background grid is drawn
         infer_layout: bool
-            if false min and max will not be set, important for plots with NANs and Infs
+            if false min and max will not be set , important for plots with NANs and Infs
         """
 
         assert len(labels) == 2
@@ -264,7 +263,7 @@ class Plot(object):
 
         fig, ax = pyplot.subplots(nrows=1, ncols=1)
 
-        # determine boundaries
+        # determine boundaries and scale
         if infer_layout:
             xmin = np.min(x)
             xmax = np.max(x)
@@ -287,9 +286,11 @@ class Plot(object):
 
         for i in sorted(lines.keys(), key=sortfunc, reverse=False):
             if shades:
-                shade = ax.fill_between(x, shades[i][0], shades[i][1], alpha=0.3, edgecolor='none',
-                                        facecolor=hex2color('#8E908F'))
-                ax.plot(x, lines[i], marker=marker, mew=3.*scale, mec=shade._facecolors[0], ms=10.*scale, label=i)
+                shade = ax.fill_between(x, shades[i][0], shades[i][1], alpha=0.3, edgecolor='none', facecolor=hex2color('#8E908F'))
+                if infer_layout:
+                    ax.plot(x, lines[i], marker=marker, mew=3.*scale, mec=shade._facecolors[0], ms=10.*scale, label=i)
+                else:
+                    ax.plot(x, lines[i], marker=marker, mec=shade._facecolors[0], label=i)
             else:
                 if infer_layout:
                     ax.plot(x, lines[i], marker=marker, mec='w', mew=3*scale, ms=10.*scale, label=i)
@@ -632,6 +633,7 @@ class Plot(object):
         else:
             alpha = 1.
 
+
         if height:
             fig = pyplot.figure()
             ax = fig.gca(projection='3d')
@@ -669,10 +671,7 @@ class Plot(object):
                                       transOffset=ax.transData)
         ax.add_collection(l_collection)
 
-        if edge_cb:
-            l_collection.set_array(np.empty(1))
-            cb = fig.colorbar(l_collection, orientation='horizontal', shrink=0.66, format=r"%.2f")
-
+        # if edge_cb:
         #TODO: edge colorbar
         #if visual_style.has_key("edge_color_dict"):
         #    sm = pyplot.cm.ScalarMappable(cmap=map_edges, norm=pyplot.Normalize(vmin= min_color, vmax= max_color))

@@ -633,6 +633,7 @@ class Plot(object):
         else:
             alpha = 1.
 
+
         if height:
             fig = pyplot.figure()
             ax = fig.gca(projection='3d')
