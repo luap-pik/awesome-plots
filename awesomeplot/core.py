@@ -265,8 +265,8 @@ class Plot(object):
 
         # determine boundaries and scale
         if infer_layout:
-            xmin = np.min(x)
-            xmax = np.max(x)
+            xmin = np.min(x.values()) if isinstance(x, dict) else np.min(x)
+            xmax = np.max(x.values()) if isinstance(x, dict) else np.max(x)
             if not shades:
                 ymin = np.min([np.min(l) for l in lines.itervalues()])
                 ymax = np.max([np.max(l) for l in lines.itervalues()])
@@ -285,17 +285,18 @@ class Plot(object):
             ax.grid()
 
         for i in sorted(lines.keys(), key=sortfunc, reverse=False):
+            _x = x[i] if isinstance(x, dict) else x
             if shades:
-                shade = ax.fill_between(x, shades[i][0], shades[i][1], alpha=0.3, edgecolor='none', facecolor=hex2color('#8E908F'))
+                shade = ax.fill_between(_x, shades[i][0], shades[i][1], alpha=0.3, edgecolor='none', facecolor=hex2color('#8E908F'))
                 if infer_layout:
-                    ax.plot(x, lines[i], marker=marker, mew=3.*scale, mec=shade._facecolors[0], ms=10.*scale, label=i)
+                    ax.plot(_x, lines[i], marker=marker, mew=3.*scale, mec=shade._facecolors[0], ms=10.*scale, label=i)
                 else:
-                    ax.plot(x, lines[i], marker=marker, mec=shade._facecolors[0], label=i)
+                    ax.plot(_x, lines[i], marker=marker, mec=shade._facecolors[0], label=i)
             else:
                 if infer_layout:
-                    ax.plot(x, lines[i], marker=marker, mec='w', mew=3*scale, ms=10.*scale, label=i)
+                    ax.plot(_x, lines[i], marker=marker, mec='w', mew=3*scale, ms=10.*scale, label=i)
                 else:
-                    ax.plot(x, lines[i], marker=marker, mec='w', label=i)
+                    ax.plot(_x, lines[i], marker=marker, mec='w', label=i)
 
         ax.set_xlabel(labels[0])
         ax.set_ylabel(labels[1])
@@ -632,6 +633,7 @@ class Plot(object):
             alpha = 1.
         else:
             alpha = 1.
+
 
         if height:
             fig = pyplot.figure()
