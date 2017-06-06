@@ -368,6 +368,7 @@ class Plot(object):
         matplotlib.rcParams['lines.linewidth'] = backup
 
         return fig
+
     def add_contour_4d(self, x, y, z, v, labels=['x', 'y', 'z']):
         """
             Plots Contourplots
