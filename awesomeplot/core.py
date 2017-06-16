@@ -2,11 +2,11 @@
 # -*- coding: utf-8 -*-
 
 __author__ = "Paul Schultz"
-__date__ = "May 23, 2016"
-__version__ = "v0.3"
+__date__ = "May 11, 2017"
+__version__ = "v2.2"
 
 """
-Module contains class Plot.
+Module contains class AwesomePlot.
 
 Derivative of the matplotlib module. The aim is to create
 visually attractive, unambigous and colour-blind-friendly
@@ -25,12 +25,8 @@ import numpy as np
 
 # import matplotlib and submodules
 import matplotlib
-
-from mpl_toolkits.mplot3d import Axes3D
-from matplotlib import cm
 from matplotlib import pyplot
 from matplotlib import cycler
-import matplotlib.colors as mc
 from matplotlib.cm import register_cmap
 from matplotlib.colors import ListedColormap, LinearSegmentedColormap, hex2color
 
@@ -42,9 +38,11 @@ import pandas as pd
 # import warnings module to issue warning on user input without interrupting the program
 import warnings
 
+# TODO: optional fig,ax objects as arguments: add_*(..., figax=None): fig, ax = figax
+
 class Plot(object):
     """
-    Plot class.
+    AwesomePlot class.
 
     The class is consistently sets reasonable matplotlib rc parameters for three different use cases.
     It can be instantiated either to create images for
@@ -55,52 +53,6 @@ class Plot(object):
 
     Images are landscape per default.
     """
-
-    # predefine colour maps:
-
-    # generic discrete cmap (10 items)
-    discrete_colours = ListedColormap(
-        np.array(
-            ['#1f77b4', '#33a02c', '#ff7f00', '#6a3d9a', '#e31a1c', '#a6cee3', '#b2df8a', '#fb9a99', '#fdbf6f', '#cab2d6']),
-        'discrete'
-    )
-
-
-    register_cmap('discrete', cmap=discrete_colours)
-
-    discrete_colours_12 = ListedColormap(
-        np.array(
-            ['#adb0c2','#ffb6c1', '#d065bb','#670567' ,'#f47b39','#c31717','#831010', '#0a2a9a','#4baad8','#a7f0a7', '#52ba32' ,'#2a721a']),
-        'discrete_12'
-    )
-
-    register_cmap('discrete_12', cmap=discrete_colours_12)
-
-    # PIK discrete cmap (4 items)
-    pik_colours = ListedColormap(
-        np.array(['#e37222', '#009fda', '#69923a', '#8e908f']),
-        'pik'
-    )
-    register_cmap(pik_colours.name, cmap=pik_colours)
-
-    # linear interpolated cmap (based on PIK colours)
-    lin_colours = LinearSegmentedColormap.from_list(
-        'linear', [(0, 'w'), (1, hex2color('#e37222'))]
-    )
-    lin_colours.set_bad(hex2color('#8e908f'))
-    register_cmap(lin_colours.name, cmap=lin_colours)
-
-    # symmetric interpolated cmap (based on PIK colours)
-
-    # TODO linear/sym clours dont work
-    sym_colours = LinearSegmentedColormap.from_list(
-        'sym', [(0, hex2color('#009fda')), (0.5, hex2color('#8e908f')), (1, hex2color('#e37222'))]
-    )
-    sym_colours.set_bad('k')
-    register_cmap(sym_colours.name, cmap=sym_colours)
-
-    # linestyle sequence for multiplots
-    linestyles = np.tile(['-', '--','-.'], 1 + discrete_colours_12.N // 3)[:discrete_colours_12.N]
 
     def __init__(self, output='paper', rc_spec={}, font_scale=1.1):
         """
@@ -115,13 +67,19 @@ class Plot(object):
 
         assert output in ["paper", "talk", "poster", "notebook"]
 
+        # workaround for KeyError in self.rc savefig.format
+        if output in ["talk", "poster"]:
+            self.figure_format = "png"
+            self.transparent = True
+        else:
+            self.figure_format = "pdf"
+            self.transparent = False
+
         self.rc = {'xtick.direction': 'in',
-                   # TODO: KeyError: 'savefig.format' in p.save, although declaration of savefig.format in panda.py
-                   'savefig.format': 'pdf',
                    'ytick.direction': 'in',
                    'verbose.level': 'helpful',
                    'lines.linewidth': 1.8,
-                   'axes.linewidth': 3
+                   'axes.linewidth': 1.8
                    }
 
         if rc_spec:
@@ -130,21 +88,157 @@ class Plot(object):
         seaborn.set_style(style="white", rc=self.rc)
         seaborn.set_context(output, font_scale=font_scale, rc=self.rc)
 
+        # predefine colour maps:
+
+        # generic discrete cmap (10 items)
+        self.discrete_colours = ListedColormap(
+            np.array(
+                ['#1f77b4', '#33a02c', '#ff7f00', '#6a3d9a', '#e31a1c', '#a6cee3', '#b2df8a', '#fb9a99', '#fdbf6f', '#cab2d6']),
+            'discrete'
+        )
+        register_cmap('discrete', cmap=self.discrete_colours)
+
+        # PIK discrete cmap (4 items)
+        self.pik_colours = ListedColormap(
+            np.array(['#F25B28', '#009FDA', '#69923A', '#686C70']),
+            'pik'
+        )
+        register_cmap(self.pik_colours.name, cmap=self.pik_colours)
+
+        # linear interpolated cmap (based on PIK colours)
+        self.lin_colours = LinearSegmentedColormap.from_list(
+            'linear', [(0, 'w'), (1, hex2color('#e37222'))]
+        )
+        self.lin_colours.set_bad(hex2color('#8e908f'))
+        register_cmap(self.lin_colours.name, cmap=self.lin_colours)
+
+        # symmetric interpolated cmap (based on PIK colours)
+        self.sym_colours = LinearSegmentedColormap.from_list(
+            'sym', [(0, hex2color('#009fda')), (0.5, hex2color('#8e908f')), (1, hex2color('#e37222'))]
+        )
+        self.sym_colours.set_bad('k')
+        register_cmap(self.sym_colours.name, cmap=self.sym_colours)
+
+
+
+        discrete_colours_12 = ListedColormap(
+            np.array(
+                ['#adb0c2', '#ffb6c1', '#d065bb', '#670567', '#f47b39', '#c31717', '#831010', '#0a2a9a', '#4baad8',
+                 '#a7f0a7', '#52ba32', '#2a721a']),
+            'discrete_12'
+        )
+
+        register_cmap('discrete_12', cmap=discrete_colours_12)
+
+        # linestyle sequence for multiplots
+        self.linestyles = np.tile(['-', '--','-.'], 1 + discrete_colours_12.N // 3)[:discrete_colours_12.N]
+
         self.set_default_colours('pik')
 
         self.figures = []
+
+    @classmethod
+    def paper(cls, font_scale=1.2):
+        """
+        Class method yielding an AwesomePlot instance of type "paper"
+
+        Parameters
+        ----------
+        cls: object
+            AwesomePlot class
+
+        Returns
+        -------
+        instance of class AwesomePlot
+
+        """
+
+        rc = dict()
+        rc['figure.figsize'] = (11.69, 8.268)  # A4
+        rc['pdf.compression'] = 6  # 0 to 9
+        rc['savefig.format'] = 'pdf'
+        rc['pdf.fonttype'] = 42
+        rc['savefig.dpi'] = 300
+
+        return cls(output='paper', rc_spec=rc, font_scale=font_scale)
+
+    @classmethod
+    def talk(cls, font_scale=1.2):
+        """
+        Class method yielding an AwesomePlot instance of type "talk"
+
+        Parameters
+        ----------
+        cls: object
+            AwesomePlot class
+
+        Returns
+        -------
+        instance of class AwesomePlot
+
+        """
+        rc = dict()
+        rc['figure.figsize'] = (8.268, 5.872)  # A5
+        rc['savefig.format'] = 'png'
+        rc['savefig.dpi'] = 300
+
+        return cls(output='talk', rc_spec=rc, font_scale=font_scale)
+
+    @classmethod
+    def poster(cls, font_scale=1.2):
+        """
+        Class method yielding an AwesomePlot instance of type "poster"
+
+        Parameters
+        ----------
+        cls: object
+            AwesomePlot class
+
+        Returns
+        -------
+        instance of class AwesomePlot
+
+        """
+
+        rc = dict()
+        rc['savefig.format'] = 'png'
+        rc['savefig.dpi'] = 300
+
+        return cls(output='poster', rc_spec=rc, font_scale=font_scale)
+
+    @classmethod
+    def notebook(cls, font_scale=1.2):
+        """
+        Class method yielding an AwesomePlot instance of type "notebook"
+
+        Parameters
+        ----------
+        cls: object
+            AwesomePlot class
+
+        Returns
+        -------
+        instance of class AwesomePlot
+
+        """
+
+        rc = dict()
+        rc['savefig.format'] = 'png'
+        rc['savefig.dpi'] = 300
+
+        return cls(output='notebook', rc_spec=rc, font_scale=font_scale)
 
     ###############################################################################
     # ##                       PUBLIC FUNCTIONS                                ## #
     ###############################################################################
 
 
-    def add_lineplot(self, x=None, lines={}, shades={}, labels=['x', 'y'], sortfunc=None, grid=False, infer_layout=True, fixed_scale=None):
+    def add_lineplot(self, x=None, lines={}, shades={}, labels=['x', 'y'], marker="o", sortfunc=None, grid=False, infer_layout=True, legend=True):
         """
         Plots (multiple) lines with optional shading.
 
         This function adds a matplotlib figure object to the figure collection of
-        an Plot instance.
+        an AwesomePlot instance.
 
         Parameters
         ----------
@@ -185,19 +279,16 @@ class Plot(object):
 
         fig, ax = pyplot.subplots(nrows=1, ncols=1)
 
-        # determine boundaries
+        # determine boundaries and scale
         if infer_layout:
-            xmin = np.min(x)
-            xmax = np.max(x)
-            if not fixed_scale is None:
-                ymin, ymax = fixed_scale
+            xmin = np.min(x.values()) if isinstance(x, dict) else np.min(x)
+            xmax = np.max(x.values()) if isinstance(x, dict) else np.max(x)
+            if not shades:
+                ymin = np.min([np.min(l) for l in lines.itervalues()])
+                ymax = np.max([np.max(l) for l in lines.itervalues()])
             else:
-                if not shades:
-                    ymin = np.min([np.min(l) for l in lines.itervalues()])
-                    ymax = np.max([np.max(l) for l in lines.itervalues()])
-                else:
-                    ymin = np.min([np.min(l) for l in shades.itervalues()])
-                    ymax = np.max([np.max(l) for l in shades.itervalues()])
+                ymin = np.min([np.min(l) for l in shades.itervalues()])
+                ymax = np.max([np.max(l) for l in shades.itervalues()])
 
             xmargin = (xmax - xmin) / 200.
             ymargin = (ymax - ymin) / 200.
@@ -210,19 +301,23 @@ class Plot(object):
             ax.grid()
 
         for i in sorted(lines.keys(), key=sortfunc, reverse=False):
+            _x = x[i] if isinstance(x, dict) else x
             if shades:
-                shade = ax.fill_between(x, shades[i][0], shades[i][1], alpha=0.3, edgecolor='none',
-                                        facecolor=hex2color('#8E908F'))
-                ax.plot(x, lines[i], marker='o', mew=3.*scale, mec=shade._facecolors[0], ms=10.*scale, label=i)
+                shade = ax.fill_between(_x, shades[i][0], shades[i][1], alpha=0.3, edgecolor='none', facecolor=hex2color('#8E908F'))
+                if infer_layout:
+                    ax.plot(_x, lines[i], marker=marker, mew=3.*scale, mec=shade._facecolors[0], ms=10.*scale, label=i)
+                else:
+                    ax.plot(_x, lines[i], marker=marker, mec=shade._facecolors[0], label=i)
             else:
                 if infer_layout:
-                    ax.plot(x, lines[i], marker='o', mec='w', mew=3*scale, ms=10.*scale, label=i)
+                    ax.plot(_x, lines[i], marker=marker, mec='w', mew=3*scale, ms=10.*scale, label=i)
                 else:
-                    ax.plot(x, lines[i], marker='o', mec='w', label=i)
+                    ax.plot(_x, lines[i], marker=marker, mec='w', label=i)
 
         ax.set_xlabel(labels[0])
         ax.set_ylabel(labels[1])
-        pyplot.legend(frameon=False, loc='center left', bbox_to_anchor=(1.05, 0.5))
+        if legend:
+            pyplot.legend(frameon=True)
         fig.tight_layout()
 
         self.figures.append(fig)
@@ -358,8 +453,8 @@ class Plot(object):
             c = ax.contourf(x, y, z, levels=levels, cmap=cmap, origin='lower', antialiased=True, vmin=zmin, vmax=zmax)
             cl = ax.contour(x, y, z, colors='k', levels=levels)
         else:
-            c = ax.contourf(x, y, z, cmap=cmap)
-            #cl = ax.contour(x, y, z, colors='k')
+            c = ax.contourf(x, y, z, cmap=cmap, origin='lower', antialiased=True, vmin=zmin, vmax=zmax)
+            cl = ax.contour(x, y, z, colors='k')
 
         if text:
             ax.clabel(cl, fontsize=.25 * self.textsize, inline=1)
@@ -519,7 +614,7 @@ class Plot(object):
                 c = factor
 
         settings = {
-            "joint_kws": dict(alpha=1, c=c, cmap=pyplot.get_cmap(c_map)),
+            "joint_kws": dict(alpha=1, color=c, cmap=pyplot.get_cmap(c_map)),
             "marginal_kws": dict(bins=bins, rug=False),
             "annot_kws": dict(stat=None, frameon=True, loc="best", handlelength=0),
             "space": 0.1,
@@ -539,14 +634,13 @@ class Plot(object):
 
         return scatter.fig
 
-    def add_hist(self, data, label='x', nbins=20):
+    def add_hist(self, data, label='x', nbins=20, sortfunc=None, legend=True):
 
-        # ensure data is nested list
-        if isinstance(data[0], (int, float)):
-            data = list([data, ])
+        # ensure data is dict
+        assert isinstance(data, dict)
 
-        xmin = np.min([np.min(l) for l in data])
-        xmax = np.max([np.max(l) for l in data])
+        xmin = np.min([np.min(l) for l in data.values()])
+        xmax = np.max([np.max(l) for l in data.values()])
 
         xmargin = (xmax - xmin) / 100.
 
@@ -557,12 +651,12 @@ class Plot(object):
         bottom = np.zeros(nbins)
         ymax = 0.
         counter = 0
-        _, b = np.histogram(data[0], bins=nbins, density=True)
-        for d in data:
+        _, b = np.histogram(data[data.keys()[0]], bins=nbins, density=True)
+        for d in sorted(data.keys(), key=sortfunc, reverse=False):
             c = list(matplotlib.rcParams['axes.prop_cycle'])[counter]['color']
-            h, _ = np.histogram(d, bins=nbins, density=True)
+            h, _ = np.histogram(data[d], bins=nbins, density=True)
             ax.bar(.5 * (b[1:] + b[:-1]), h, bottom=bottom, color=c, edgecolor="none", align='center', zorder=1,
-                   width=(xmax - xmin) / (nbins * 1.5))
+                   width=(xmax - xmin) / (nbins * 1.5), label=d)
             bottom += h
             counter += 1
             ymax += h.max()
@@ -574,11 +668,15 @@ class Plot(object):
 
         ax.yaxis.grid(color='w', linestyle='-', zorder=2)
 
+        if legend:
+            pyplot.legend(frameon=True)
+        fig.tight_layout()
+
         self.figures.append(fig)
 
         return fig
 
-    def add_network(self, adjacency, styles={}, sym=True, axis_labels=None, vertex_labels=None, labels=False, height=False):
+    def add_network(self, adjacency, styles={}, axis_labels=None, vertex_labels=None, labels=False, height=False, node_cb=False, edge_cb=False, node_cmap=None, edge_cmap=None):
         """
             Plots network, submit eg vertex color values via styles={"vertex_color":values}
 
@@ -601,6 +699,9 @@ class Plot(object):
         """
         if height:
             from mpl_toolkits.mplot3d import Axes3D
+            from mpl_toolkits.mplot3d.art3d import Line3DCollection as LineCollection
+        else:
+            from matplotlib.collections import LineCollection
         from scipy.sparse import issparse, isspmatrix_dok
 
         if issparse(adjacency):
@@ -613,14 +714,16 @@ class Plot(object):
             edgelist = np.vstack(np.where(adjacency > 0)).transpose()
             edgelist = sorted(set([tuple(np.sort(edgelist[i])) for i in range(len(edgelist))]))
 
-        if sym:
-            cmap = pyplot.get_cmap("sym")
-        else:
-            cmap = pyplot.get_cmap("linear")
+        source = [e[0] for e in edgelist]
+        target = [e[1] for e in edgelist]
 
-        cmap = pyplot.get_cmap("discrete_12")
+        if node_cmap is None:
+            node_cmap = pyplot.get_cmap("linear")
 
+        if edge_cmap is None:
+            edge_cmap = pyplot.get_cmap("linear")
 
+        node_cmap = pyplot.get_cmap("discrete_12")
         visual_style = dict(
             edge_color=np.repeat('#8e908f', len(edgelist)),
             edge_width=seaborn.axes_style()["axes.linewidth"],
@@ -638,16 +741,16 @@ class Plot(object):
                 visual_style["layout"] = np.random.random([N, 2])
             print "Assign random layout for plotting."
 
-        if visual_style.has_key("edge_color_dict"):
-            f = lambda x: visual_style["edge_color_dict"][x]
-            for i, e in enumerate(edgelist):
-                visual_style["edge_color"][i] = f(e)
 
-        if visual_style.has_key("vertex_color_dict"):
-            f = lambda x: visual_style["vertex_color_dict"][x]
-            print range(N)
-            for i, e in enumerate(range(N)):
-                visual_style["vertex_color"][i] = f(e)
+        if visual_style.has_key("edge_color_dict"):
+            min_color = np.min(visual_style["edge_color_dict"].values())
+            max_color = np.max(visual_style["edge_color_dict"].values())
+            f = lambda x: (np.float(visual_style["edge_color"][x]) - min_color) / (max_color - min_color)
+            visual_style["edge_color"] = [f(e) for e in edgelist]
+            alpha = 1.
+        else:
+            alpha = 1.
+
 
         if height:
             fig = pyplot.figure()
@@ -660,20 +763,47 @@ class Plot(object):
             x, y = zip(*visual_style["layout"])
             args = (x, y)
 
-        ax.axis("off")
+        # ax.axis("off")
 
-        for i, e in enumerate(edgelist):
-            edge = np.vstack((visual_style["layout"][e[0]], visual_style["layout"][e[1]]))
-            if height:
-                xyz = edge[:, 0], edge[:, 1], edge[:, 2]
-            else:
-                xyz = edge[:, 0], edge[:, 1]
-            ax.plot(*xyz,
-                    color=visual_style["edge_color"][i],
-                    linestyle='-',
-                    lw=visual_style["edge_width"],
-                    alpha=0.5,
-                    zorder=1)
+        if height:
+            xyz = (np.asarray(((visual_style["layout"][source, 0],
+                               visual_style["layout"][source, 1],
+                               visual_style["layout"][source, 2]),
+                              (visual_style["layout"][target, 0],
+                               visual_style["layout"][target, 1],
+                               visual_style["layout"][target, 2]))
+                             ).transpose(2, 0, 1))
+        else:
+            xyz = (np.asarray(((visual_style["layout"][source, 0],
+                                visual_style["layout"][source, 1]),
+                               (visual_style["layout"][target, 0],
+                                visual_style["layout"][target, 1]))
+                              ).transpose(2, 0, 1))
+        l_collection = LineCollection(xyz,
+                                      linewidths=visual_style["edge_width"],
+                                      antialiaseds=(1,),
+                                      colors=visual_style["edge_color"],
+                                      cmap=edge_cmap,
+                                      alpha=alpha,
+                                      zorder=1,
+                                      transOffset=ax.transData)
+        ax.add_collection(l_collection)
+
+        # if edge_cb:
+        #TODO: edge colorbar
+        #if visual_style.has_key("edge_color_dict"):
+        #    sm = pyplot.cm.ScalarMappable(cmap=map_edges, norm=pyplot.Normalize(vmin= min_color, vmax= max_color))
+        #    # fake up the array of the scalar mappable. Urgh...
+        #    sm.set_array(visual_style["edge_color"])
+        #    cb= pyplot.colorbar(sm,format=r"%.2f")
+        #    cb.outline.set_visible(False)
+        #    from matplotlib import ticker
+        #    tick_locator = ticker.MaxNLocator(nbins=6)
+        #    cb.locator = tick_locator
+        #    cb.update_ticks()
+        #    ax.set_title('maximum equals '+str(max_color)+' at edge '+str(visual_style["edge_color_dict"].keys()[np.argmax(visual_style[
+        # "edge_color_dict"].values())]))
+
 
         margin = max(0.05 * (np.max(x) - np.min(x)), 0.05 * (np.max(y) - np.min(y)))
         ax.set_xlim([np.min(x) - margin, np.max(x) + margin])
@@ -683,29 +813,20 @@ class Plot(object):
             nodes = ax.scatter(*args,
                                c='#8e908f',
                                s=visual_style["vertex_size"],
-                               cmap=cmap,
+                               cmap=node_cmap,
                                edgecolor='w',
                                zorder=2)
         else:
             nodes = ax.scatter(*args,
                                c=visual_style["vertex_color"],
                                s=visual_style["vertex_size"],
-                               cmap=cmap,
+                               cmap=node_cmap,
                                vmin=np.floor(np.min(visual_style["vertex_color"])),
                                vmax=np.ceil(np.max(visual_style["vertex_color"])),
                                edgecolor='w',
                                zorder=2)
-            #cb = fig.colorbar(nodes, orientation='horizontal', shrink=0.66, format=r"%.1f")
-            # deprecated
-            # [t.set_fontsize(seaborn.axes_style()["legend.fontsize"]) for t in cb.ax.get_xticklabels()]
-
-        if labels:
-            discrete_colours_12 =    ('#adb0c2','#ffb6c1', '#d065bb','#670567' ,'#f47b39','#c31717','#831010',
-                                      '#0a2a9a','#4baad8','#a7f0a7', '#52ba32' ,'#2a721a')
-            for i in xrange(N):
-                pyplot.annotate(str(i), xy=(x[i], y[i]), xytext=(-7, -10), textcoords='offset points',
-                                # size=0.5 * self.rc["font.size"],
-                                horizontalalignment='right', verticalalignment='bottom',color=discrete_colours_12[i])
+            if node_cb:
+                cb = fig.colorbar(nodes, orientation='horizontal', shrink=0.66, format=r"%.2f")
 
         if axis_labels:
             ax.set_xlabel(axis_labels[0], labelpad=30)
@@ -713,9 +834,15 @@ class Plot(object):
             if height:
                 ax.set_zlabel(axis_labels[2], labelpad=30)
 
-        if vertex_labels is not None:
+        if vertex_labels is None:
+            if labels:
+                for i in xrange(N):
+                    pyplot.annotate(str(i), xy=(x[i], y[i]), xytext=(3, 3), textcoords='offset points',
+                                    # size=0.5 * self.rc["font.size"],
+                                    horizontalalignment='left', verticalalignment='bottom')
+        else:
             for i in xrange(N):
-                pyplot.annotate(np.around(vertex_labels[i], decimals=3), xy=(x[i], y[i]), xytext=(3, -25),
+                pyplot.annotate(str(vertex_labels[i]), xy=(x[i], y[i]), xytext=(3, -25),
                                 textcoords='offset points',
                                 # size=0.5 * self.params["font.size"],
                                 horizontalalignment='left', verticalalignment='bottom')
@@ -729,13 +856,13 @@ class Plot(object):
 
     def save(self, fnames, fig = None):
         if fig:
-            fig.savefig(filename=fnames + '.' + self.rc['savefig.format'], bbox_inches='tight')
+            fig.savefig(filename=fnames + '.' + self.figure_format, bbox_inches='tight', transparent=self.transparent)
             self.clear(fig)
         else:
             assert len(fnames) == len(self.figures)
             for i, fig in enumerate(self.figures):
-                print "save:", fnames[i] + '.' + self.rc['savefig.format']
-                fig.savefig(filename=fnames[i] + '.' + self.rc['savefig.format'], bbox_inches='tight')
+                print "save:", fnames[i] + '.' + self.figure_format
+                fig.savefig(filename=fnames[i] + '.' + self.figure_format, bbox_inches='tight', transparent=self.transparent)
                 pyplot.close(fig)
             for i, fig in enumerate(self.figures):
                 self.figures.remove(fig)
@@ -786,8 +913,8 @@ class Plot(object):
         self.dfcmp = pyplot.get_cmap(cmap_name)
         self.update_params(
             {
-                'axes.prop_cycle': cycler('color', list(self.dfcmp.colors))+ \
-                cycler('linestyle', self.linestyles[:self.dfcmp.N]),
+                'axes.prop_cycle': cycler('color', list(self.dfcmp.colors)) + \
+                    cycler('linestyle', self.linestyles[:self.dfcmp.N]),
                 'image.cmap': self.dfcmp.name
             }
         )
@@ -805,24 +932,154 @@ class Plot(object):
         else:
             raise ValueError("Invalid input. Must be x, y, or xy.")
 
+
+class AddonPandas(object):
+    """
+    Plot class.
+
+    The class is consistently sets reasonable matplotlib rc parameters for three different use cases.
+    It can be instantiated either to create images for
+
+    a) publications (A4, pdf)
+    b) talks (A5, png)
+    c) posters (not implemented)
+
+    Images are landscape per default.
+    """
+
+    # def __init__(self, output='paper', rc_spec={}, font_scale=1.1, use_pandas=False):
+    #     super(AddonPandas, self).__init__(output, rc_spec, font_scale)
+    #     self.use_pandas = use_pandas
+
+
+    ###############################################################################
+    # ##                       PUBLIC FUNCTIONS                                ## #
+    ###############################################################################
+
+    @staticmethod
+    def df_to_dict(df):
+        from pandas import DataFrame
+        assert isinstance(df, DataFrame)
+
+        # create dict from dataframe
+        dd = df.to_dict()
+
+        # remove sub-dictionaries
+        return {key: dd[key].values() for key in dd.keys()}
+
+    ###############################################################################
+    # ##                      PRIVATE FUNCTIONS                                ## #
+    ###############################################################################
+
+
+    def add_lineplot(self, df, firstcol=False, legend=True, grid=True, logx=False, logy=False, loglog=False):
+        # transfer x-values to dataframe index
+        if firstcol:
+            df.index = df[df.columns[0]]
+            df = df[df.columns[1:]]
+
+
+        fig, ax = pyplot.subplots(nrows=1, ncols=1)
+        df.plot(
+            kind="line",
+            use_index=True,
+            marker='o',
+            mew=2,
+            mec='w',
+            colormap=self.dfcmp,
+            grid=grid,
+            legend=legend,
+            ax=ax,
+            loglog=loglog,
+            logx=logx,
+            logy=logy
+        )
+
+        self.figures.append(fig)
+
+        return fig
+
+    def add_scatterplot(self, df, x, y, factor=None, bins=20, show_annot=None, kind="scatter", kdeplot=False, c_map="linear"):
+
+        # FIXME: check, whether x and y are columns of df
+        assert isinstance(x, basestring)
+        assert isinstance(y, basestring)
+
+        if kdeplot:
+            c = "k"
+        else:
+            if factor is None:
+                c = self.pik_colours.colors[0]
+            else:
+                assert isinstance(factor, basestring)
+                c = df[factor]
+
+        xmin = df[x].min()
+        xmax = df[x].max()
+        ymin = df[y].min()
+        ymax = df[y].max()
+
+        settings = {
+            "joint_kws": dict(alpha=1, c=c, cmap=pyplot.get_cmap(c_map)),
+            "marginal_kws": dict(bins=bins, rug=False),
+            "annot_kws": dict(stat=r"r", frameon=True, loc=0, handlelength=0),
+            "space": 0.1,
+            "kind": kind,
+            "xlim": (xmin, xmax),
+            "ylim": (ymin, ymax)
+        }
+
+        try:
+            scatter = seaborn.jointplot(x, y, data=df, stat_func=show_annot, **settings)
+        except:
+            # some kws are not valid in certain plot kinds
+            pyplot.close()
+            settings = {
+                "annot_kws": dict(stat=r"r", frameon=True, loc=0, handlelength=0),
+                "space": 0.1,
+                "kind": kind,
+                "xlim": (xmin, xmax),
+                "ylim": (ymin, ymax)
+            }
+            scatter = seaborn.jointplot(x, y, data=df, stat_func=show_annot, **settings)
+
+        if kdeplot:
+            scatter.plot_joint(seaborn.kdeplot, shade=True, cut=5, zorder=0, n_levels=6, cmap=pyplot.get_cmap(c_map))
+
+        fig = scatter.fig
+        pyplot.close() # close JointGrid object
+
+        self.figures.append(fig)
+
+        return fig
+
+    def add_hist(self, df, columns=None, normed=True, nbins=20, log=False, c_map="pik"):
+
+        if columns:
+            df = df[columns]
+
+        settings = {
+            "stacked": True,
+            #"alpha": 0.75,
+            "bins": nbins,
+            "normed": normed,
+            "log": log,
+            "cmap": c_map
+        }
+
+        fig, ax = pyplot.subplots(nrows=1, ncols=1)
+        df.plot.hist(ax=ax, **settings)
+
+        self.figures.append(fig)
+
+        return fig
+
+class PandasPlot(AddonPandas,Plot):
+    pass
+
+
 if __name__ == "__main__":
-    p = Plot(output="paper")
-
-    #p.show_cmap(p.dfcmp.name)
-
-    labels = [r'$\phi$']
-
-    x = np.arange(10)
-    z = 1 - 2. * np.random.random([10, 10])
-    #p.add_contour(x, x, z, sym=True)
-
-    import networkx as nx
-    A = nx.to_scipy_sparse_matrix(nx.erdos_renyi_graph(10, 0.01), format="dok")
-
-
-    f = p.add_network(A, styles={"vertex_color": np.random.random(10)}, height=False)
-
-    p.save("test/test", f)
-
-    p.show()
+    # TODO: implement tests!
+    import doctest
+    doctest.testmod()
 
