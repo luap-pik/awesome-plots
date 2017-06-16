@@ -139,7 +139,7 @@ class Plot(object):
     ###############################################################################
 
 
-    def add_lineplot(self, x=None, lines={}, shades={}, labels=['x', 'y'], sortfunc=None, grid=False, layout=True,fixed_scale=None):
+    def add_lineplot(self, x=None, lines={}, shades={}, labels=['x', 'y'], sortfunc=None, grid=False, infer_layout=True, fixed_scale=None):
         """
         Plots (multiple) lines with optional shading.
 
@@ -163,7 +163,7 @@ class Plot(object):
             e.g. (a) sortfunc = float (b) sortfunc=f, where f = lambda x: float(x.split()[-2])
         grid: bool
             if true, background grid is drawn
-        layout: bool
+        infer_layout: bool
             if false min and max will not be set , important for plots with NANs and Infs
         """
 
@@ -186,7 +186,7 @@ class Plot(object):
         fig, ax = pyplot.subplots(nrows=1, ncols=1)
 
         # determine boundaries
-        if layout:
+        if infer_layout:
             xmin = np.min(x)
             xmax = np.max(x)
             if not fixed_scale is None:
@@ -215,7 +215,7 @@ class Plot(object):
                                         facecolor=hex2color('#8E908F'))
                 ax.plot(x, lines[i], marker='o', mew=3.*scale, mec=shade._facecolors[0], ms=10.*scale, label=i)
             else:
-                if layout:
+                if infer_layout:
                     ax.plot(x, lines[i], marker='o', mec='w', mew=3*scale, ms=10.*scale, label=i)
                 else:
                     ax.plot(x, lines[i], marker='o', mec='w', label=i)
@@ -281,7 +281,7 @@ class Plot(object):
 
         return fig
 
-    def add_contour(self, x, y, z, labels=['x', 'y', 'z'], nlevel=10, sym=False, text=False, horizontal=False, pi=None, layout=True, fixed_scale=None):
+    def add_contour(self, x, y, z, labels=['x', 'y', 'z'], nlevel=10, sym=False, text=False, horizontal=False, pi=None, infer_layout=True, fixed_scale=None):
         """
             Plots Contourplots
 
@@ -303,7 +303,7 @@ class Plot(object):
                 True: horizontal colour bar
             pi: "xaxis" or "yaxis"
                 if one of the axis is given in multiples of pi
-            layout: bool
+            infer_layout: bool
                 False means, the contourf/contour function dont get a
                 number of levels or a zmin and zmax. This is necessary
                 for a matrix z with NANs or Infs in it, since then
@@ -316,7 +316,7 @@ class Plot(object):
 
         # Issue warning if z contains NaN or Inf
         if not np.isfinite(z).all():
-            warnings.warn("Since z is not finite, it would be better to use layout=False.")
+            warnings.warn("Since z is not finite, it would be better to use infer_layout=False.")
 
         if sym:
             cmap = pyplot.get_cmap('sym')
@@ -353,7 +353,7 @@ class Plot(object):
 
         pyplot.gca().patch.set_color('#8e908f')  # print the Nan/inf Values in grey)
 
-        if layout:
+        if infer_layout:
             levels = np.linspace(zmin, zmax, nlevel + 1, endpoint=True)
             c = ax.contourf(x, y, z, levels=levels, cmap=cmap, origin='lower', antialiased=True, vmin=zmin, vmax=zmax)
             cl = ax.contour(x, y, z, colors='k', levels=levels)
