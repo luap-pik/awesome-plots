@@ -31,7 +31,7 @@ from matplotlib.cm import register_cmap
 from matplotlib.colors import ListedColormap, LinearSegmentedColormap, hex2color
 
 # import seaborn for fancy style templates
-import seaborn
+#import seaborn
 
 import pandas as pd
 
@@ -85,8 +85,8 @@ class Plot(object):
         if rc_spec:
             self.rc.update(rc_spec)
 
-        seaborn.set_style(style="white", rc=self.rc)
-        seaborn.set_context(output, font_scale=font_scale, rc=self.rc)
+#        seaborn.set_style(style="white", rc=self.rc)
+ #       seaborn.set_context(output, font_scale=font_scale, rc=self.rc)
 
         # predefine colour maps:
 
@@ -317,7 +317,7 @@ class Plot(object):
         ax.set_xlabel(labels[0])
         ax.set_ylabel(labels[1])
         if legend:
-            pyplot.legend(frameon=True)
+            pyplot.legend(frameon=True, loc=1)
         fig.tight_layout()
 
         self.figures.append(fig)
@@ -453,8 +453,9 @@ class Plot(object):
             c = ax.contourf(x, y, z, levels=levels, cmap=cmap, origin='lower', antialiased=True, vmin=zmin, vmax=zmax)
             cl = ax.contour(x, y, z, colors='k', levels=levels)
         else:
-            c = ax.contourf(x, y, z, cmap=cmap, origin='lower', antialiased=True, vmin=zmin, vmax=zmax)
-            cl = ax.contour(x, y, z, colors='k')
+            c = ax.contourf(x, y, z, cmap=cmap)
+            #c = ax.contourf(x, y, z, cmap=cmap, origin='lower', antialiased=True, vmin=zmin, vmax=zmax)
+            #cl = ax.contour(x, y, z, colors='k')
 
         if text:
             ax.clabel(cl, fontsize=.25 * self.textsize, inline=1)
@@ -586,53 +587,53 @@ class Plot(object):
         return fig
 
 
-    def add_scatterplot(self, x, y, labels=['x', 'y'], factor=None, show_annot=None, bins=20, kind="scatter", kdeplot=False, c_map="linear"):
-        assert len(labels) == 2
-
-        if isinstance(x, dict):
-            assert sorted(x.keys()) == sorted(y.keys())
-            assert len(x.keys()) <= self.dfcmp.N
-            # determine boundaries
-            xmin = np.min([np.min(l) for l in x.itervalues()])
-            xmax = np.max([np.max(l) for l in x.itervalues()])
-            ymin = np.min([np.min(l) for l in y.itervalues()])
-            ymax = np.max([np.max(l) for l in y.itervalues()])
-        else:
-            # determine boundaries
-            xmin = x.min()
-            xmax = x.max()
-            ymin = y.min()
-            ymax = y.max()
-
-        # adjust colors
-        if kdeplot:
-            c = "k"
-        else:
-            if factor is None:
-                c = self.pik_colours.colors[0]
-            else:
-                c = factor
-
-        settings = {
-            "joint_kws": dict(alpha=1, color=c, cmap=pyplot.get_cmap(c_map)),
-            "marginal_kws": dict(bins=bins, rug=False),
-            "annot_kws": dict(stat=None, frameon=True, loc="best", handlelength=0),
-            "space": 0.1,
-            "kind": kind,
-            "xlim": (xmin, xmax),
-            "ylim": (ymin, ymax)
-        }
-
-        scatter = seaborn.jointplot(x, y, stat_func=show_annot, **settings)
-
-        if kdeplot:
-            scatter.plot_joint(seaborn.kdeplot, shade=True, cut=5, zorder=0, n_levels=6, cmap=pyplot.get_cmap(c_map))
-
-        scatter.set_axis_labels(*labels)
-
-        self.figures.append(scatter.fig)
-
-        return scatter.fig
+    # def add_scatterplot(self, x, y, labels=['x', 'y'], factor=None, show_annot=None, bins=20, kind="scatter", kdeplot=False, c_map="linear"):
+    #     assert len(labels) == 2
+    #
+    #     if isinstance(x, dict):
+    #         assert sorted(x.keys()) == sorted(y.keys())
+    #         assert len(x.keys()) <= self.dfcmp.N
+    #         # determine boundaries
+    #         xmin = np.min([np.min(l) for l in x.itervalues()])
+    #         xmax = np.max([np.max(l) for l in x.itervalues()])
+    #         ymin = np.min([np.min(l) for l in y.itervalues()])
+    #         ymax = np.max([np.max(l) for l in y.itervalues()])
+    #     else:
+    #         # determine boundaries
+    #         xmin = x.min()
+    #         xmax = x.max()
+    #         ymin = y.min()
+    #         ymax = y.max()
+    #
+    #     # adjust colors
+    #     if kdeplot:
+    #         c = "k"
+    #     else:
+    #         if factor is None:
+    #             c = self.pik_colours.colors[0]
+    #         else:
+    #             c = factor
+    #
+    #     settings = {
+    #         "joint_kws": dict(alpha=1, color=c, cmap=pyplot.get_cmap(c_map)),
+    #         "marginal_kws": dict(bins=bins, rug=False),
+    #         "annot_kws": dict(stat=None, frameon=True, loc="best", handlelength=0),
+    #         "space": 0.1,
+    #         "kind": kind,
+    #         "xlim": (xmin, xmax),
+    #         "ylim": (ymin, ymax)
+    #     }
+    #
+    #     scatter = seaborn.jointplot(x, y, stat_func=show_annot, **settings)
+    #
+    #     if kdeplot:
+    #         scatter.plot_joint(seaborn.kdeplot, shade=True, cut=5, zorder=0, n_levels=6, cmap=pyplot.get_cmap(c_map))
+    #
+    #     scatter.set_axis_labels(*labels)
+    #
+    #     self.figures.append(scatter.fig)
+    #
+    #     return scatter.fig
 
     def add_hist(self, data, label='x', nbins=20, sortfunc=None, legend=True):
 
@@ -726,7 +727,7 @@ class Plot(object):
         node_cmap = pyplot.get_cmap("discrete_12")
         visual_style = dict(
             edge_color=np.repeat('#8e908f', len(edgelist)),
-            edge_width=seaborn.axes_style()["axes.linewidth"],
+            #edge_width=seaborn.axes_style()["axes.linewidth"],
             vertex_size=100,
             vertex_label=range(N)
         )
@@ -780,7 +781,7 @@ class Plot(object):
                                 visual_style["layout"][target, 1]))
                               ).transpose(2, 0, 1))
         l_collection = LineCollection(xyz,
-                                      linewidths=visual_style["edge_width"],
+                                      #linewidths=visual_style["edge_width"],
                                       antialiaseds=(1,),
                                       colors=visual_style["edge_color"],
                                       cmap=edge_cmap,
@@ -999,59 +1000,59 @@ class AddonPandas(object):
 
         return fig
 
-    def add_scatterplot(self, df, x, y, factor=None, bins=20, show_annot=None, kind="scatter", kdeplot=False, c_map="linear"):
-
-        # FIXME: check, whether x and y are columns of df
-        assert isinstance(x, basestring)
-        assert isinstance(y, basestring)
-
-        if kdeplot:
-            c = "k"
-        else:
-            if factor is None:
-                c = self.pik_colours.colors[0]
-            else:
-                assert isinstance(factor, basestring)
-                c = df[factor]
-
-        xmin = df[x].min()
-        xmax = df[x].max()
-        ymin = df[y].min()
-        ymax = df[y].max()
-
-        settings = {
-            "joint_kws": dict(alpha=1, c=c, cmap=pyplot.get_cmap(c_map)),
-            "marginal_kws": dict(bins=bins, rug=False),
-            "annot_kws": dict(stat=r"r", frameon=True, loc=0, handlelength=0),
-            "space": 0.1,
-            "kind": kind,
-            "xlim": (xmin, xmax),
-            "ylim": (ymin, ymax)
-        }
-
-        try:
-            scatter = seaborn.jointplot(x, y, data=df, stat_func=show_annot, **settings)
-        except:
-            # some kws are not valid in certain plot kinds
-            pyplot.close()
-            settings = {
-                "annot_kws": dict(stat=r"r", frameon=True, loc=0, handlelength=0),
-                "space": 0.1,
-                "kind": kind,
-                "xlim": (xmin, xmax),
-                "ylim": (ymin, ymax)
-            }
-            scatter = seaborn.jointplot(x, y, data=df, stat_func=show_annot, **settings)
-
-        if kdeplot:
-            scatter.plot_joint(seaborn.kdeplot, shade=True, cut=5, zorder=0, n_levels=6, cmap=pyplot.get_cmap(c_map))
-
-        fig = scatter.fig
-        pyplot.close() # close JointGrid object
-
-        self.figures.append(fig)
-
-        return fig
+    # def add_scatterplot(self, df, x, y, factor=None, bins=20, show_annot=None, kind="scatter", kdeplot=False, c_map="linear"):
+    #
+    #     # FIXME: check, whether x and y are columns of df
+    #     assert isinstance(x, basestring)
+    #     assert isinstance(y, basestring)
+    #
+    #     if kdeplot:
+    #         c = "k"
+    #     else:
+    #         if factor is None:
+    #             c = self.pik_colours.colors[0]
+    #         else:
+    #             assert isinstance(factor, basestring)
+    #             c = df[factor]
+    #
+    #     xmin = df[x].min()
+    #     xmax = df[x].max()
+    #     ymin = df[y].min()
+    #     ymax = df[y].max()
+    #
+    #     settings = {
+    #         "joint_kws": dict(alpha=1, c=c, cmap=pyplot.get_cmap(c_map)),
+    #         "marginal_kws": dict(bins=bins, rug=False),
+    #         "annot_kws": dict(stat=r"r", frameon=True, loc=0, handlelength=0),
+    #         "space": 0.1,
+    #         "kind": kind,
+    #         "xlim": (xmin, xmax),
+    #         "ylim": (ymin, ymax)
+    #     }
+    #
+    #     try:
+    #         scatter = seaborn.jointplot(x, y, data=df, stat_func=show_annot, **settings)
+    #     except:
+    #         # some kws are not valid in certain plot kinds
+    #         pyplot.close()
+    #         settings = {
+    #             "annot_kws": dict(stat=r"r", frameon=True, loc=0, handlelength=0),
+    #             "space": 0.1,
+    #             "kind": kind,
+    #             "xlim": (xmin, xmax),
+    #             "ylim": (ymin, ymax)
+    #         }
+    #         scatter = seaborn.jointplot(x, y, data=df, stat_func=show_annot, **settings)
+    #
+    #     if kdeplot:
+    #         scatter.plot_joint(seaborn.kdeplot, shade=True, cut=5, zorder=0, n_levels=6, cmap=pyplot.get_cmap(c_map))
+    #
+    #     fig = scatter.fig
+    #     pyplot.close() # close JointGrid object
+    #
+    #     self.figures.append(fig)
+    #
+    #     return fig
 
     def add_hist(self, df, columns=None, normed=True, nbins=20, log=False, c_map="pik"):
 
