@@ -79,7 +79,7 @@ class Plot(object):
                    'ytick.direction': 'in',
                    'verbose.level': 'helpful',
                    'lines.linewidth': 1.8,
-                   'axes.linewidth': 1.8
+                   'axes.linewidth': 3
                    }
 
         if rc_spec:
@@ -317,6 +317,7 @@ class Plot(object):
         ax.set_xlabel(labels[0])
         ax.set_ylabel(labels[1])
         if legend:
+            #pyplot.legend(frameon=False, loc='center left', bbox_to_anchor=(1.05, 0.5))
             pyplot.legend(frameon=True, loc=1)
         fig.tight_layout()
 
@@ -758,28 +759,25 @@ class Plot(object):
             ax = fig.gca(projection='3d')
             x, y, z = zip(*visual_style["layout"])
             args = (x, y, z)
+            xyz = (np.asarray(((visual_style["layout"][source, 0],
+                                visual_style["layout"][source, 1],
+                                visual_style["layout"][source, 2]),
+                               (visual_style["layout"][target, 0],
+                                visual_style["layout"][target, 1],
+                                visual_style["layout"][target, 2]))
+                              ).transpose(2, 0, 1))
         else:
             fig, ax = pyplot.subplots(nrows=1, ncols=1)
             fig.tight_layout()
             x, y = zip(*visual_style["layout"])
             args = (x, y)
-
+            xyz = (np.asarray(((visual_style["layout"][source, 0],
+                            visual_style["layout"][source, 1]),
+                           (visual_style["layout"][target, 0],
+                            visual_style["layout"][target, 1]))
+                          ).transpose(2, 0, 1))
         # ax.axis("off")
 
-        if height:
-            xyz = (np.asarray(((visual_style["layout"][source, 0],
-                               visual_style["layout"][source, 1],
-                               visual_style["layout"][source, 2]),
-                              (visual_style["layout"][target, 0],
-                               visual_style["layout"][target, 1],
-                               visual_style["layout"][target, 2]))
-                             ).transpose(2, 0, 1))
-        else:
-            xyz = (np.asarray(((visual_style["layout"][source, 0],
-                                visual_style["layout"][source, 1]),
-                               (visual_style["layout"][target, 0],
-                                visual_style["layout"][target, 1]))
-                              ).transpose(2, 0, 1))
         l_collection = LineCollection(xyz,
                                       #linewidths=visual_style["edge_width"],
                                       antialiaseds=(1,),
@@ -834,6 +832,14 @@ class Plot(object):
             ax.set_ylabel(axis_labels[1], labelpad=30)
             if height:
                 ax.set_zlabel(axis_labels[2], labelpad=30)
+
+        if labels:
+            discrete_colours_12 =    ('#adb0c2','#ffb6c1', '#d065bb','#670567' ,'#f47b39','#c31717','#831010',
+                                      '#0a2a9a','#4baad8','#a7f0a7', '#52ba32' ,'#2a721a')
+            for i in xrange(N):
+                pyplot.annotate(str(i), xy=(x[i], y[i]), xytext=(-7, -10), textcoords='offset points',
+                                # size=0.5 * self.rc["font.size"],
+                                horizontalalignment='right', verticalalignment='bottom',color=discrete_colours_12[i])
 
         if vertex_labels is None:
             if labels:
