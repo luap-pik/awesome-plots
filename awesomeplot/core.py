@@ -308,7 +308,7 @@ class Plot(object):
 
         return fig
 
-    def add_distplot(self, x, y, labels=['x', 'y'], linestyle='-', filled=True, text=True):
+    def add_distplot(self, x, y, labels=['x', 'y'], linestyle='-', filled=True, text=True, marker="o"):
 
         assert len(labels) == 2
 
@@ -349,7 +349,7 @@ class Plot(object):
             ax.text(x[3], q[3, 2] * .95, r'75%') #, fontsize=.6 * self.textsize)
             ax.text(x[4], q[4, 3] * .95, r'95%') #, fontsize=.6 * self.textsize)
 
-        ax.plot(x, m, marker='o', mec='w', mew=3*scale, ms=10*scale)
+        ax.plot(x, m, marker=marker, mec='w', mew=3*scale, ms=10*scale)
 
         ax.set_xlabel(labels[0])
         ax.set_ylabel(labels[1])
