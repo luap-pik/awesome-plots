@@ -258,8 +258,8 @@ class Plot(object):
         if x is None:
             x = np.arange(len(lines[0]))
 
-        if shades:
-            assert sorted(shades.keys()) == sorted(lines.keys())
+        # if shades:
+        #     assert sorted(shades.keys()) == sorted(lines.keys())
 
         fig, ax = pyplot.subplots(nrows=1, ncols=1)
 
@@ -286,7 +286,7 @@ class Plot(object):
 
         for i in sorted(lines.keys(), key=sortfunc, reverse=False):
             _x = x[i] if isinstance(x, dict) else x
-            if shades:
+            if shades and i in shades.keys():
                 shade = ax.fill_between(_x, shades[i][0], shades[i][1], alpha=0.3, edgecolor='none', facecolor=hex2color('#8E908F'))
                 if infer_layout:
                     ax.plot(_x, lines[i], marker=marker, mew=3.*scale, mec=shade._facecolors[0], ms=10.*scale, label=i)
