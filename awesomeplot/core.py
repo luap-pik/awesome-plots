@@ -259,7 +259,7 @@ class Plot(object):
             x = np.arange(len(lines[0]))
 
         if shades:
-            assert sorted(shades.keys()) == sorted(lines.keys())
+            assert set(shades.keys()).issubset(lines.keys())
 
         fig, ax = pyplot.subplots(nrows=1, ncols=1)
 
