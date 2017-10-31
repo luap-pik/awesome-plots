@@ -360,7 +360,7 @@ class Plot(object):
 
         return fig
 
-    def add_contour(self, x, y, z, labels=['x', 'y', 'z'], nlevel=10, sym=False, text=False, horizontal=False, pi=None, layout=True, fixed_scale=None):
+    def add_contour(self, x, y, z, labels=['x', 'y', 'z'], nlevel=10, sym=False, text=False, horizontal=False, pi=None, layout=True, fixed_scale=None, boundary=True):
         """
             Plots Contourplots
 
@@ -389,6 +389,8 @@ class Plot(object):
                 zmin and zmax become NAN/Inf.
             fixed_scale: tuple
                 min/max values to apply a fixed colour scale to z-values
+            boundary: bool
+                whether to draw contour lines or not
 
         """
         assert len(labels) == 3
@@ -432,10 +434,12 @@ class Plot(object):
         if layout:
             levels = np.linspace(zmin, zmax, nlevel + 1, endpoint=True)
             c = ax.contourf(x, y, z, levels=levels, cmap=cmap, origin='lower', antialiased=True, vmin=zmin, vmax=zmax)
-            cl = ax.contour(x, y, z, colors='k', levels=levels)
+            if boundary:
+                cl = ax.contour(x, y, z, colors='k', levels=levels)
         else:
             c = ax.contourf(x, y, z, cmap=cmap, origin='lower', antialiased=True, vmin=zmin, vmax=zmax)
-            cl = ax.contour(x, y, z, colors='k')
+            if boundary:
+                cl = ax.contour(x, y, z, colors='k')
 
         if text:
             ax.clabel(cl, fontsize=.25 * self.textsize, inline=1)
