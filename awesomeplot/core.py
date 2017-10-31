@@ -360,7 +360,9 @@ class Plot(object):
 
         return fig
 
-    def add_contour(self, x, y, z, labels=['x', 'y', 'z'], nlevel=10, sym=False, text=False, horizontal=False, pi=None, layout=True, fixed_scale=None, boundary=True):
+    def add_contour(self, x, y, z, labels=['x', 'y', 'z'], nlevel=10, sym=False,
+                    text=False, horizontal=False, pi=None, layout=True, fixed_scale=None, boundary=True,
+                    colorbar=False):
         """
             Plots Contourplots
 
@@ -391,6 +393,8 @@ class Plot(object):
                 min/max values to apply a fixed colour scale to z-values
             boundary: bool
                 whether to draw contour lines or not
+            colorbar: bool
+                draw a colorbar or not
 
         """
         assert len(labels) == 3
@@ -461,9 +465,9 @@ class Plot(object):
                 y_label[i] = str(ax.get_yticks()[i]) + "$\pi$"
             ax.set_yticklabels(y_label)
 
-        if horizontal:
+        if colorbar and horizontal:
             fig.colorbar(c, label=labels[2], orientation='horizontal', pad=0.2)
-        else:
+        elif colorbar:
             fig.colorbar(c, label=labels[2])  # not so cool for smalll numbers format=r"%.1f"
 
         self.figures.append(fig)
