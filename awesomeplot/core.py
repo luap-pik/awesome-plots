@@ -20,7 +20,10 @@ Overriden inherited methods::
 
 """
 
-#TODO: distribution-adjusted colormap, magic function to modify style of existing figures
+#TODO: distribution-adjusted colormap
+#TODO:  magic function to modify style of existing figures
+#TODO: label on bar in histogram
+#TODO: map plots
 
 # Import NumPy for the array object and fast numerics.
 import numpy as np
