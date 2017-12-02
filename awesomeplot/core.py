@@ -20,6 +20,8 @@ Overriden inherited methods::
 
 """
 
+#TODO: distribution-adjusted colormap, magic function to modify style of existing figures
+
 # Import NumPy for the array object and fast numerics.
 import numpy as np
 
