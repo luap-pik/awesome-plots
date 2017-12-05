@@ -225,7 +225,7 @@ class Plot(object):
     ###############################################################################
 
 
-    def add_lineplot(self, x=None, lines={}, shades={}, labels=['x', 'y'], marker="o", linewidth='-',
+    def add_lineplot(self, x=None, lines={}, shades={}, labels=['x', 'y'], marker="o", linewidth=None,
                      sortfunc=None, grid=False, infer_layout=True, legend=True):
         """
         Plots (multiple) lines with optional shading.
@@ -263,6 +263,9 @@ class Plot(object):
 
         if x is None:
             x = np.arange(len(lines[lines.keys()[0]]))
+
+        if linewidth is None:
+            linewidth = self.rc['lines.linewidth']
 
         # if shades:
         #     assert sorted(shades.keys()) == sorted(lines.keys())
