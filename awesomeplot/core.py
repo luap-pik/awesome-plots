@@ -20,6 +20,11 @@ Overriden inherited methods::
 
 """
 
+#TODO: distribution-adjusted colormap
+#TODO:  magic function to modify style of existing figures
+#TODO: label on bar in histogram
+#TODO: map plots
+
 # Import NumPy for the array object and fast numerics.
 import numpy as np
 
@@ -220,7 +225,8 @@ class Plot(object):
     ###############################################################################
 
 
-    def add_lineplot(self, x=None, lines={}, shades={}, labels=['x', 'y'], marker="o", sortfunc=None, grid=False, infer_layout=True, legend=True):
+    def add_lineplot(self, x=None, lines={}, shades={}, labels=['x', 'y'], marker="o", linewidth=None,
+                     sortfunc=None, grid=False, infer_layout=True, legend=True):
         """
         Plots (multiple) lines with optional shading.
 
@@ -256,7 +262,10 @@ class Plot(object):
         #assert len(lines.keys()) <= self.dfcmp.N
 
         if x is None:
-            x = np.arange(len(lines[0]))
+            x = np.arange(len(lines[lines.keys()[0]]))
+
+        if linewidth is None:
+            linewidth = self.rc['lines.linewidth']
 
         # if shades:
         #     assert set(shades.keys()).issubset(lines.keys())
@@ -286,17 +295,17 @@ class Plot(object):
 
         for i in sorted(lines.keys(), key=sortfunc, reverse=False):
             _x = x[i] if isinstance(x, dict) else x
-            if shades:
+            if shades and i in shades.keys():
                 shade = ax.fill_between(_x, shades[i][0], shades[i][1], alpha=0.3, edgecolor='none', facecolor=hex2color('#8E908F'))
                 if infer_layout:
-                    ax.plot(_x, lines[i], marker=marker, mew=3.*scale, mec=shade._facecolors[0], ms=10.*scale, label=i)
+                    ax.plot(_x, lines[i], linewidth=linewidth, marker=marker, mew=3. * scale, mec=shade._facecolors[0], ms=10. * scale, label=i)
                 else:
-                    ax.plot(_x, lines[i], marker=marker, mec=shade._facecolors[0], label=i)
+                    ax.plot(_x, lines[i], linewidth=linewidth, marker=marker, mec=shade._facecolors[0], label=i)
             else:
                 if infer_layout:
-                    ax.plot(_x, lines[i], marker=marker, mec='w', mew=3*scale, ms=10.*scale, label=i)
+                    ax.plot(_x, lines[i], linewidth=linewidth, marker=marker, mec='w', mew=3 * scale, ms=10. * scale, label=i)
                 else:
-                    ax.plot(_x, lines[i], marker=marker, mec='w', label=i)
+                    ax.plot(_x, lines[i], linewidth=linewidth, marker=marker, mec='w', label=i)
 
         ax.set_xlabel(labels[0])
         ax.set_ylabel(labels[1])
@@ -360,7 +369,9 @@ class Plot(object):
 
         return fig
 
-    def add_contour(self, x, y, z, labels=['x', 'y', 'z'], nlevel=10, sym=False, text=False, horizontal=False, pi=None, layout=True, fixed_scale=None):
+    def add_contour(self, x, y, z, labels=['x', 'y', 'z'], nlevel=10, sym=False,
+                    text=False, horizontal=False, pi=None, layout=True, fixed_scale=None, boundary=True,
+                    colorbar=False):
         """
             Plots Contourplots
 
@@ -389,6 +400,10 @@ class Plot(object):
                 zmin and zmax become NAN/Inf.
             fixed_scale: tuple
                 min/max values to apply a fixed colour scale to z-values
+            boundary: bool
+                whether to draw contour lines or not
+            colorbar: bool
+                draw a colorbar or not
 
         """
         assert len(labels) == 3
@@ -432,10 +447,12 @@ class Plot(object):
         if layout:
             levels = np.linspace(zmin, zmax, nlevel + 1, endpoint=True)
             c = ax.contourf(x, y, z, levels=levels, cmap=cmap, origin='lower', antialiased=True, vmin=zmin, vmax=zmax)
-            cl = ax.contour(x, y, z, colors='k', levels=levels)
+            if boundary:
+                cl = ax.contour(x, y, z, colors='k', levels=levels)
         else:
             c = ax.contourf(x, y, z, cmap=cmap, origin='lower', antialiased=True, vmin=zmin, vmax=zmax)
-            cl = ax.contour(x, y, z, colors='k')
+            if boundary:
+                cl = ax.contour(x, y, z, colors='k')
 
         if text:
             ax.clabel(cl, fontsize=.25 * self.textsize, inline=1)
@@ -457,9 +474,9 @@ class Plot(object):
                 y_label[i] = str(ax.get_yticks()[i]) + "$\pi$"
             ax.set_yticklabels(y_label)
 
-        if horizontal:
+        if colorbar and horizontal:
             fig.colorbar(c, label=labels[2], orientation='horizontal', pad=0.2)
-        else:
+        elif colorbar:
             fig.colorbar(c, label=labels[2])  # not so cool for smalll numbers format=r"%.1f"
 
         self.figures.append(fig)
