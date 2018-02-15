@@ -129,6 +129,14 @@ class Plot(object):
 
         self.figures = []
 
+        # function aliases for backwards compatibility
+        self.add_contour = self.draw_contour
+        self.add_distplot = self.draw_distplot
+        self.add_hist = self.draw_hist
+        self.add_lineplot = self.draw_lineplot
+        self.add_network = self.draw_network
+        self.add_scatterplot = self.draw_scatterplot
+
     @classmethod
     def paper(cls, font_scale=1.2):
         """
@@ -225,7 +233,7 @@ class Plot(object):
     ###############################################################################
 
 
-    def add_lineplot(self, x=None, lines={}, shades={}, labels=['x', 'y'], marker="o", linewidth=None,
+    def draw_lineplot(self, x=None, lines={}, shades={}, labels=['x', 'y'], marker="o", linewidth=None,
                      sortfunc=None, grid=False, infer_layout=True, legend=True):
         """
         Plots (multiple) lines with optional shading.
@@ -317,7 +325,7 @@ class Plot(object):
 
         return fig
 
-    def add_distplot(self, x, y, labels=['x', 'y'], linestyle='-', filled=True, text=True, marker="o"):
+    def draw_distplot(self, x, y, labels=['x', 'y'], linestyle='-', filled=True, text=True, marker="o"):
 
         assert len(labels) == 2
 
@@ -369,7 +377,7 @@ class Plot(object):
 
         return fig
 
-    def add_contour(self, x, y, z, labels=['x', 'y', 'z'], nlevel=10, sym=False,
+    def draw_contour(self, x, y, z, labels=['x', 'y', 'z'], nlevel=10, sym=False,
                     text=False, horizontal=False, pi=None, layout=True, fixed_scale=None, boundary=True,
                     colorbar=False):
         """
@@ -486,7 +494,7 @@ class Plot(object):
         return fig
 
 
-    def add_scatterplot(self, x, y, labels=['x', 'y'], factor=None, show_annot=None, bins=20, kind="scatter", kdeplot=False, c_map="linear"):
+    def draw_scatterplot(self, x, y, labels=['x', 'y'], factor=None, show_annot=None, bins=20, kind="scatter", kdeplot=False, c_map="linear"):
         assert len(labels) == 2
 
         if isinstance(x, dict):
@@ -534,7 +542,7 @@ class Plot(object):
 
         return scatter.fig
 
-    def add_hist(self, data, label='x', nbins=20, sortfunc=None, legend=True):
+    def draw_hist(self, data, label='x', nbins=20, sortfunc=None, legend=True):
 
         # ensure data is dict
         assert isinstance(data, dict)
@@ -576,7 +584,7 @@ class Plot(object):
 
         return fig
 
-    def add_network(self, adjacency, styles={}, axis_labels=None, vertex_labels=None, labels=False, height=False, node_cb=False, edge_cb=False, node_cmap=None, edge_cmap=None):
+    def draw_network(self, adjacency, styles={}, axis_labels=None, vertex_labels=None, labels=False, height=False, node_cb=False, edge_cb=False, node_cmap=None, edge_cmap=None):
         """
             Plots network, submit eg vertex color values via styles={"vertex_color":values}
 
@@ -754,6 +762,125 @@ class Plot(object):
 
         return fig
 
+    def space_time_plot(self, x, y, z, labels=['x', 'y', 'z'], zmin=0, zmax=1, colorbar=True, sym=False, horizontal=False, pi=None):
+
+        warnings.warn("New and not much tested.")
+
+        assert len(labels) == 3
+
+        # Issue warning if z contains NaN or Inf
+        if not np.isfinite(z).all():
+            warnings.warn("Since z is not finite, it would be better to use layout=False.")
+
+        if sym:
+            cmap = pyplot.get_cmap("sym")
+            cmap.set_under(cmap(0))
+            cmap.set_over(cmap(255))
+            extend = "both"
+        else:
+            cmap = pyplot.get_cmap("YlOrBr")
+            cmap.set_over(cmap(255))
+            extend = "max"
+
+        pyplot.gca().patch.set_color('#8e908f')  # print the Nan/inf Values in black)
+
+        fig, ax = pyplot.subplots(nrows=1, ncols=1)
+
+        fig.tight_layout()
+
+        c = ax.imshow(z, extent=[x.min(), x.max(), y.min(), y.max()],
+                      interpolation="none", aspect="auto",
+                      cmap=cmap, origin='lower', vmin=zmin, vmax=zmax)
+        c.set_clim([zmin, zmax])
+
+        ax.set_xlabel(labels[0])
+        ax.set_ylabel(labels[1])
+
+        if pi == "xaxis":
+            x_label = np.empty(np.size(ax.get_xticks()), dtype='object')
+            for i in range(np.size(ax.get_xticks())):
+                x_label[i] = str(ax.get_xticks()[i]) + "$\pi$"
+            ax.set_xticklabels(x_label)
+
+        if pi == "yaxis":
+            y_label = np.empty(np.size(ax.get_yticks()), dtype='object')
+            for i in range(np.size(ax.get_yticks())):
+                y_label[i] = str(ax.get_yticks()[i]) + "$\pi$"
+            ax.set_yticklabels(y_label)
+
+        if colorbar and horizontal:
+            fig.colorbar(c, label=labels[2], orientation='horizontal', pad=0.2, shrink=0.8, extend=extend)
+        elif colorbar:
+            fig.colorbar(c, label=labels[2], shrink=0.8, extend=extend)  # not so cool for smalll numbers format=r"%.1f"
+
+        self.figures.append(fig)
+
+        return fig
+
+    def snapshot(self, y1, y2, labels=['x', 'y1', 'y2']):
+
+        warnings.warn("New and not much tested.")
+
+        assert len(labels) == 3
+
+        n = max(len(y1), len(y2))
+
+        x = range(n)
+
+        fig, ax = pyplot.subplots(nrows=2, ncols=1, sharex=True)
+
+        # determine boundaries and scale
+
+        xmin = 0
+        xmax = n - 1
+        xmargin = 1. * n / 200.
+        scale = np.log(1 + 1. * n / len(x))
+
+        ax[0].plot(x, y1, linewidth=0, marker=".", ms=10. * scale, label=labels[1])
+        ax[0].hlines(y=np.pi, xmin=0, xmax=n - 1, linewidth=1)
+        ax[1].plot(x, y2, linewidth=0, marker=".", ms=10. * scale, label=labels[2])
+        ax[1].hlines(y=0, xmin=0, xmax=n - 1, linewidth=1)
+
+        y_label = np.empty(np.size(ax[0].get_yticks()), dtype='object')
+        for i in range(np.size(ax[0].get_yticks())):
+            y_label[i] = str(round(ax[0].get_yticks()[i] / np.pi, 1)) + "$\pi$"
+        ax[0].set_yticklabels(y_label)
+
+        ax[1].set_xlabel(labels[0])
+        ax[0].set_ylabel(labels[1])
+        ax[1].set_ylabel(labels[2])
+
+        fig.tight_layout()
+
+        self.figures.append(fig)
+
+        return fig
+
+    def polar_plot(self, op, label="r", grid=False):
+
+        warnings.warn("New and not much tested.")
+
+        fig = pyplot.figure()
+
+        ax = pyplot.subplot(111, polar=True)
+
+        ax.spines['polar'].set_visible(grid)
+
+        ax.plot(np.angle(op), np.abs(op), "-", marker="o", zorder=3, alpha=0.2)
+
+        xT = pyplot.xticks()[0]
+        xL = ['0', r'$\frac{\pi}{4}$', r'$\frac{\pi}{2}$', r'$\frac{3\pi}{4}$', r'$\pi$', r'$\frac{5\pi}{4}$',
+              r'$\frac{3\pi}{2}$', r'$\frac{7\pi}{4}$']
+        pyplot.xticks(xT, xL)
+
+        ax.set_xlabel(label)
+
+        fig.tight_layout()
+
+        self.figures.append(fig)
+
+        return fig
+
     def save(self, fnames, fig = None):
         if fig:
             fig.savefig(fnames + '.' + self.figure_format, bbox_inches='tight', transparent=self.transparent)
@@ -872,7 +999,7 @@ class AddonPandas(object):
     ###############################################################################
 
 
-    def add_lineplot(self, df, firstcol=False, legend=True, grid=True, logx=False, logy=False, loglog=False):
+    def draw_lineplot(self, df, firstcol=False, legend=True, grid=True, logx=False, logy=False, loglog=False):
         # transfer x-values to dataframe index
         if firstcol:
             df.index = df[df.columns[0]]
@@ -899,7 +1026,7 @@ class AddonPandas(object):
 
         return fig
 
-    def add_scatterplot(self, df, x, y, factor=None, bins=20, show_annot=None, kind="scatter", kdeplot=False, c_map="linear"):
+    def draw_scatterplot(self, df, x, y, factor=None, bins=20, show_annot=None, kind="scatter", kdeplot=False, c_map="linear"):
 
         # FIXME: check, whether x and y are columns of df
         assert isinstance(x, basestring)
@@ -953,7 +1080,7 @@ class AddonPandas(object):
 
         return fig
 
-    def add_hist(self, df, columns=None, normed=True, nbins=20, log=False, c_map="pik"):
+    def draw_hist(self, df, columns=None, normed=True, nbins=20, log=False, c_map="pik"):
 
         if columns:
             df = df[columns]
