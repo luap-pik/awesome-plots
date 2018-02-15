@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 __author__ = "Paul Schultz"
-__date__ = "May 11, 2017"
-__version__ = "v2.2"
+__date__ = "Feb 15, 2018"
+__version__ = "v2.3"
 
 """
 Module contains class AwesomePlot.
@@ -21,7 +21,7 @@ Overriden inherited methods::
 """
 
 #TODO: distribution-adjusted colormap
-#TODO:  magic function to modify style of existing figures
+#TODO: magic function to modify style of existing figures
 #TODO: label on bar in histogram
 #TODO: map plots
 
