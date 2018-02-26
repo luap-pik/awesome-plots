@@ -25,7 +25,7 @@ def test_case():
 
     p.add_distplot(x=x, y=z)
 
-    p.add_contour(x=x, y=x, z=z, sym=True)
+    p.add_contour(x=x, y=x, z=z, sym=False, colorbar=True)
 
     p.add_scatterplot(y, u[:, 1]**2, labels=label, kdeplot=True)
 
@@ -40,7 +40,7 @@ def test_case():
     A = nx.to_scipy_sparse_matrix(g, format="dok")
 
     z = np.zeros(g.number_of_nodes())
-    z[np.array(g.degree().values()) > 2] = 1
+    z[np.array(dict(g.degree()).values()) > 2] = 1
 
     layout = np.c_[pos, z]
 
@@ -59,6 +59,7 @@ def test_pandas():
     assert isinstance(p, PandasPlot)
 
     p.set_default_colours("pik")
+    p.set_default_colours("viridis")
 
     n = 100
 
@@ -81,16 +82,18 @@ def test_pandas():
 
     p.add_hist(df, c_map="discrete")
 
+    p.show()
+
     p.save(["test/p" + str(i) for i in range(len(p.figures))])
 
-    p.show()
+
 
 if __name__ == "__main__":
     import os
     if not os.path.exists("test"):
         os.mkdir("test")
     test_case()
-    #test_pandas()
+    test_pandas()
 
 
 

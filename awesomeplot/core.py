@@ -38,6 +38,9 @@ from matplotlib.colors import ListedColormap, LinearSegmentedColormap, hex2color
 # import seaborn for fancy style templates
 import seaborn
 
+# import additional colormaps https://github.com/BIDS/colormap
+import colormaps
+
 # import warnings module to issue warnings on user input without interrupting the program
 import warnings
 
@@ -938,13 +941,29 @@ class Plot(object):
 
     def set_default_colours(self, cmap_name):
         self.dfcmp = pyplot.get_cmap(cmap_name)
-        self.update_params(
-            {
-                'axes.prop_cycle': cycler('color', list(self.dfcmp.colors)) + \
-                    cycler('linestyle', self.linestyles[:self.dfcmp.N]),
-                'image.cmap': self.dfcmp.name
-            }
-        )
+
+        # select m evenly spaced colours out of a list of n (https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm)
+        idx = lambda m, n: [i * n // m + n // (2 * m) for i in range(m)]
+
+        # cyclers need to be of equal length
+        if len(self.linestyles) > self.dfcmp.N:
+            self.update_params(
+                {
+                    'axes.prop_cycle': cycler('color', list(self.dfcmp.colors)) + \
+                                       cycler('linestyle', self.linestyles[:self.dfcmp.N]),
+                    'image.cmap': self.dfcmp.name
+                }
+            )
+        else:
+            selection = idx(len(self.linestyles), self.dfcmp.N)
+            self.update_params(
+                {
+                    'axes.prop_cycle': cycler('color', np.array(self.dfcmp.colors)[selection]) + \
+                                       cycler('linestyle', self.linestyles),
+                    'image.cmap': self.dfcmp.name
+                }
+
+            )
         #TODO color cycler with selected colours
 
     def set_log(self, fig, log="y"):
