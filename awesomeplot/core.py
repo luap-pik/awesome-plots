@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 __author__ = "Paul Schultz"
-__date__ = "Feb 15, 2018"
-__version__ = "v2.3"
+__date__ = "Mar 28, 2018"
+__version__ = "v3.1"
 
 """
 Module contains class AwesomePlot.
@@ -34,9 +34,6 @@ from matplotlib import pyplot
 from matplotlib import cycler
 from matplotlib.cm import register_cmap
 from matplotlib.colors import ListedColormap, LinearSegmentedColormap, hex2color
-
-# import seaborn for fancy style templates
-import seaborn
 
 # import warnings module to issue warnings on user input without interrupting the program
 import warnings
@@ -88,8 +85,8 @@ class Plot(object):
         if rc_spec:
             self.rc.update(rc_spec)
 
-        seaborn.set_style(style="white", rc=self.rc)
-        seaborn.set_context(output, font_scale=font_scale, rc=self.rc)
+        #seaborn.set_style(style="white", rc=self.rc)
+        #seaborn.set_context(output, font_scale=font_scale, rc=self.rc)
 
         # predefine colour maps:
 
@@ -531,16 +528,17 @@ class Plot(object):
             "ylim": (ymin, ymax)
         }
 
-        scatter = seaborn.jointplot(x, y, stat_func=show_annot, **settings)
+        # TODO: refactor this!
+        #scatter = seaborn.jointplot(x, y, stat_func=show_annot, **settings)
 
-        if kdeplot:
-            scatter.plot_joint(seaborn.kdeplot, shade=True, cut=5, zorder=0, n_levels=6, cmap=pyplot.get_cmap(c_map))
+        #if kdeplot:
+        #    scatter.plot_joint(seaborn.kdeplot, shade=True, cut=5, zorder=0, n_levels=6, cmap=pyplot.get_cmap(c_map))
 
-        scatter.set_axis_labels(*labels)
+        #scatter.set_axis_labels(*labels)
+        fig = pyplot.figure()
+        self.figures.append(fig) #scatter.fig)
 
-        self.figures.append(scatter.fig)
-
-        return scatter.fig
+        return fig
 
     def draw_hist(self, data, label='x', nbins=20, sortfunc=None, legend=True):
 
@@ -634,7 +632,8 @@ class Plot(object):
 
         visual_style = dict(
             edge_color=np.repeat('#8e908f', len(edgelist)),
-            edge_width=seaborn.axes_style()["axes.linewidth"],
+            #edge_width=seaborn.axes_style()["axes.linewidth"],
+            edge_width=5,
             vertex_size=100,
             vertex_label=range(N)
         )
@@ -1057,7 +1056,8 @@ class AddonPandas(object):
         }
 
         try:
-            scatter = seaborn.jointplot(x, y, data=df, stat_func=show_annot, **settings)
+            #scatter = seaborn.jointplot(x, y, data=df, stat_func=show_annot, **settings)
+            scatter = None
         except:
             # some kws are not valid in certain plot kinds
             pyplot.close()
@@ -1068,12 +1068,12 @@ class AddonPandas(object):
                 "xlim": (xmin, xmax),
                 "ylim": (ymin, ymax)
             }
-            scatter = seaborn.jointplot(x, y, data=df, stat_func=show_annot, **settings)
+            #scatter = seaborn.jointplot(x, y, data=df, stat_func=show_annot, **settings)
 
-        if kdeplot:
-            scatter.plot_joint(seaborn.kdeplot, shade=True, cut=5, zorder=0, n_levels=6, cmap=pyplot.get_cmap(c_map))
+        #if kdeplot:
+           # scatter.plot_joint(seaborn.kdeplot, shade=True, cut=5, zorder=0, n_levels=6, cmap=pyplot.get_cmap(c_map))
 
-        fig = scatter.fig
+        fig = pyplot.figure()
         pyplot.close() # close JointGrid object
 
         self.figures.append(fig)

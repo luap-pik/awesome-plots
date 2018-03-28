@@ -23,15 +23,16 @@ def test_case():
         index=x
     )
 
+    p.add_lineplot(x=x, lines={"y": df.y, "y2": df.y2})
+
+    p.add_hist(data={i: u[i] for i in range(u.shape[1])})
+
     p.add_distplot(x=x, y=z)
 
     p.add_contour(x=x, y=x, z=z, sym=True)
 
     p.add_scatterplot(y, u[:, 1]**2, labels=label, kdeplot=True)
 
-    p.add_lineplot(x=x, lines={"y":df.y, "y2": df.y2})
-
-    p.add_hist(data={i: u[i] for i in range(u.shape[1])})
 
     import networkx as nx
     pos = np.random.random([100, 2])
@@ -40,7 +41,7 @@ def test_case():
     A = nx.to_scipy_sparse_matrix(g, format="dok")
 
     z = np.zeros(g.number_of_nodes())
-    z[np.array(g.degree().values()) > 2] = 1
+    z[dict(g.degree).values() > 2] = 1
 
     layout = np.c_[pos, z]
 
