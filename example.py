@@ -3,7 +3,7 @@ import numpy as np
 import pandas
 
 def test_case():
-    from awesomeplot.core import Plot
+    from  awesomeplot import Plot
 
     p = Plot.talk(font_scale=1.2)
     assert isinstance(p, Plot)
@@ -24,6 +24,8 @@ def test_case():
     )
 
     p.add_lineplot(x=x, lines={"y": df.y, "y2": df.y2})
+
+    quit()
 
     p.add_hist(data={i: u[i] for i in range(u.shape[1])})
 
