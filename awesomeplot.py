@@ -98,16 +98,16 @@ class Plot(object):
         }
 
         default = {k: v * font_scale for k, v in default.items()}
-        self.update_params(default)
+        self._update_params(default)
 
-        self.update_params({'xtick.direction': 'out', 'ytick.direction': 'in', 'verbose.level': 'helpful'})
+        self._update_params({'xtick.direction': 'out', 'ytick.direction': 'in', 'verbose.level': 'helpful'})
 
         if rc_spec:
-            self.update_params(rc_spec)
+            self._update_params(rc_spec)
 
         # predefine colour maps:
-        self.custom_cmaps()
-        self.set_default_colours('PIK')
+        self._custom_cmaps()
+        self._set_default_colours('PIK')
 
         # linestyle sequence for multiplots
         self.linestyles = cycler("linestyle", ['-', '--', '-.', ':'])
@@ -128,7 +128,7 @@ class Plot(object):
     # ##                       INTERNAL FUNCTIONS                              ## #
     ###############################################################################
 
-    def custom_cmaps(self):
+    def _custom_cmaps(self):
 
         # generic discrete cmap (10 items)
         discrete_colours = ListedColormap(
@@ -160,14 +160,26 @@ class Plot(object):
         sym_colours.set_bad('k')
         register_cmap(sym_colours.name, cmap=sym_colours)
 
-    def set_default_colours(self, cmap_name):
+    def _set_default_colours(self, cmap_name):
         self.dfcmp = pyplot.get_cmap(cmap_name)
-        self.update_params({'image.cmap': self.dfcmp.name})
+        self._update_params({'image.cmap': self.dfcmp.name})
 
-    def update_params(self, dic):
+    def _update_params(self, dic):
         assert all([key in matplotlib.rcParams.keys() for key in dic.keys()])
         for key, val in dic.iteritems():
             matplotlib.rcParams[key] = val
+
+    def _pi_ax_yaxis(self, _ax):
+        y_label = np.empty(np.size(_ax.get_yticks()), dtype='object')
+        for i in range(np.size(_ax.get_yticks())):
+            y_label[i] = str(round(_ax.get_yticks()[i] / np.pi, 1)) + "$\pi$"
+        _ax.set_yticklabels(y_label)
+
+    def _pi_ax_yaxis(self, _ax):
+        x_label = np.empty(np.size(_ax.get_xticks()), dtype='object')
+        for i in range(np.size(_ax.get_xticks())):
+            x_label[i] = str(round(_ax.get_xticks()[i] / np.pi, 1)) + "$\pi$"
+        _ax.set_xticklabels(x_label)
 
 
     ###############################################################################
@@ -309,6 +321,79 @@ class Plot(object):
 
         return fig, ax
 
+    def snapshot(self, y1, labels=['x', 'y1'], y1_base=None, pi=False, cmap=None, fig=None):
+
+        warnings.warn("New and not much tested.")
+
+        assert len(labels) == 2
+
+        n = len(y1)
+
+        x = range(n)
+
+        if fig is None:
+            fig = pyplot.figure(constrained_layout=True)
+            self.figures.append(fig)
+
+        ax = fig.add_subplot(1, 1, 1)
+
+        if cmap is None:
+            cc = self.dfcmp.colors
+        else:
+            cc = pyplot.get_cmap(cmap).colors
+
+        ax.plot(x, y1, linewidth=0, marker=".", label=labels[1], mfc=cc[0])
+        if y1_base is not None:
+            ax.hlines(y=y1_base, xmin=0, xmax=n - 1, zorder=-1, linestyle=':')
+
+        if pi == "y1":
+            self._pi_ax_yaxis(ax)
+
+
+        ax.set_xlabel(labels[0])
+        ax.set_ylabel(labels[1])
+
+        return fig, ax
+
+    def double_snapshot(self, y1, y2, labels=['x', 'y1', 'y2'], y1_base=None, y2_base=None, pi="y1", cmap=None):
+
+        warnings.warn("New and not much tested.")
+
+        assert len(labels) == 3
+
+        n = max(len(y1), len(y2))
+
+        x = range(n)
+
+        fig, ax = pyplot.subplots(nrows=2, ncols=1, sharex=True)
+        self.figures.append(fig)
+        fig.subplots_adjust(left=0.2, right=0.99, top=.99, bottom=0.2, hspace=0.1, wspace=0.)
+
+        if cmap is None:
+            cc = self.dfcmp.colors
+        else:
+            cc = pyplot.get_cmap(cmap).colors
+
+        ax[0].plot(x, y1, linewidth=0, marker=".", label=labels[1], mfc=cc[0])
+        if y1_base is not None:
+            ax[0].hlines(y=y1_base, xmin=0, xmax=n - 1, zorder=-1, linestyle=':')
+        ax[1].plot(x, y2, linewidth=0, marker=".", label=labels[2], mfc=cc[1])
+        if y2_base is not None:
+            ax[1].hlines(y=y2_base, xmin=0, xmax=n - 1, zorder=-1, linestyle=':')
+
+        if pi == "y1":
+            self._pi_ax_yaxis(ax[0])
+        if pi == "y2":
+            self._pi_ax_yaxis(ax[1])
+        else:
+            pass
+
+        ax[1].set_xlabel(labels[0])
+        ax[0].set_ylabel(labels[1])
+        ax[1].set_ylabel(labels[2])
+
+        return fig, ax
+
     def show(self):
         if len(self.figures) > 0:
             pyplot.show()
@@ -326,6 +411,7 @@ if __name__ == "__main__":
     z = 1 - 2. * np.random.normal(0, 2, [3, n])
     dd =  {i: 100*z[i] for i in range(len(z))}
 
-    fig, ax = p.lineplot(x, dd)
+
+    fig, ax = p.snapshot(x, y1_base=np.pi)
 
     p.show()
