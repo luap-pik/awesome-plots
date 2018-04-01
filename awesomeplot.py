@@ -43,6 +43,68 @@ import warnings
 
 # TODO: optional fig,ax objects as arguments: add_*(..., figax=None): fig, ax = figax
 
+
+class AwesomeFigure(pyplot.Figure):
+
+    def __init__(self, type="paper", **kwargs):
+
+        if type == "paper":
+            figsize = (6.75, 5)
+        else:
+            figsize = (1, 1)
+
+        super(self.__class__, self).__init__(
+                figsize=figsize,
+                dpi=300,
+                facecolor=None,
+                edgecolor=None,
+                linewidth=2,
+                frameon=True,
+                subplotpars=None,
+                tight_layout=False,
+                constrained_layout=True
+        )
+
+        self._set_style(type)
+
+    def axes_constructor(self):
+        pass
+
+
+    def _set_style(self, type):
+
+        default = {
+            'axes.linewidth': .75,
+            "axes.titlesize": 12,
+            "grid.linewidth": 1,
+            "lines.linewidth": 0.75,
+            "patch.linewidth": .3,
+            "lines.markersize": 5,
+            "lines.markeredgewidth": 0,
+            "xtick.major.width": 1,
+            "ytick.major.width": 1,
+            "xtick.minor.width": .5,
+            "ytick.minor.width": .5,
+            "xtick.major.pad": 7,
+            "ytick.major.pad": 7
+        }
+
+        if type == "paper":
+            pyplot.style.use("seaborn-paper")
+            self._update_params({k: v * 2 for k, v in default.items()})
+            self._update_params({"font.size": 14, "legend.fontsize": 14, "axes.labelsize": 18, "xtick.labelsize": 14, "ytick.labelsize": 14})
+
+        self._update_params({'xtick.direction': 'in', 'ytick.direction': 'in', 'verbose.level': 'helpful'})
+
+    def _update_params(self, dic):
+        assert all([key in matplotlib.rcParams.keys() for key in dic.keys()])
+        for key, val in dic.iteritems():
+            matplotlib.rcParams[key] = val
+
+    def show(self):
+        pyplot.show()
+
+
 class Plot(object):
     """
     AwesomePlot class.
@@ -76,31 +138,9 @@ class Plot(object):
         self.figure_format = "pdf"
         self.transparent = False
 
-        default = {
-            "font.size": 12,
-            'axes.linewidth': 2,
-            "axes.labelsize": 11,
-            "axes.titlesize": 12,
-            "xtick.labelsize": 10,
-            "ytick.labelsize": 10,
-            "legend.fontsize": 10,
-            "grid.linewidth": 1,
-            "lines.linewidth": 1.75,
-            "patch.linewidth": .3,
-            "lines.markersize": 5,
-            "lines.markeredgewidth": 0,
-            "xtick.major.width": 1,
-            "ytick.major.width": 1,
-            "xtick.minor.width": .5,
-            "ytick.minor.width": .5,
-            "xtick.major.pad": 7,
-            "ytick.major.pad": 7
-        }
 
-        default = {k: v * font_scale for k, v in default.items()}
-        self._update_params(default)
 
-        self._update_params({'xtick.direction': 'out', 'ytick.direction': 'in', 'verbose.level': 'helpful'})
+
 
         if rc_spec:
             self._update_params(rc_spec)
@@ -259,7 +299,7 @@ class Plot(object):
 
         return fig, ax
 
-    def scatterplot(self, x, y, labels=['x', 'y'], nbins=20, aspect="auto", diag=True, legend=True, sortfunc=None, cmap=None):
+    def scatterplot(self, x, y, labels=['x', 'y'], nbins=20, aspect="auto", normed=True, diag=True, legend=True, sortfunc=None, cmap=None):
         assert len(labels) == 2
 
         if isinstance(y, dict):
@@ -293,14 +333,18 @@ class Plot(object):
         ax[0, 1].tick_params(bottom=False, left=False, labelbottom=False, labelleft=False)
         ax[1, 1].tick_params(bottom=False, left=False, labelbottom=False, labelleft=False)
 
+        #TODO: ticks in/out
 
         ax[1, 0].set_xlabel(labels[0])
         ax[1, 0].set_ylabel(labels[1])
 
-        if diag:
-            ax[1, 0].plot([np.min(x.values()), np.max(x.values())], [np.min(x.values()), np.max(x.values())], "k:", zorder=-1)
-
         keys = sorted(y.keys(), key=sortfunc, reverse=False)
+
+        if normed:
+            for k in keys:
+                x[k] = (x[k] - x[k].mean(axis=0)) / x[k].std(axis=0)
+                y[k] = (y[k] - y[k].mean(axis=0)) / y[k].std(axis=0)
+
         colours = []
         for i, sty in zip(keys, cycle(style)):
             ax[1, 0].scatter(x[i], y[i], label=i, **sty)
@@ -318,13 +362,12 @@ class Plot(object):
             ncol = 2 if types > 6 else 1
             ax[0, 1].legend(h, l, frameon=True, loc=3, ncol=ncol, fontsize=9)
 
+        if diag:
+            ax[1, 0].plot([np.min(x.values()), np.max(x.values())], [np.min(x.values()), np.max(x.values())], "k:", zorder=-1)
 
         return fig, ax
 
     def snapshot(self, y1, labels=['x', 'y1'], y1_base=None, pi=False, cmap=None, fig=None):
-
-        warnings.warn("New and not much tested.")
-
         assert len(labels) == 2
 
         n = len(y1)
@@ -356,9 +399,6 @@ class Plot(object):
         return fig, ax
 
     def double_snapshot(self, y1, y2, labels=['x', 'y1', 'y2'], y1_base=None, y2_base=None, pi="y1", cmap=None):
-
-        warnings.warn("New and not much tested.")
-
         assert len(labels) == 3
 
         n = max(len(y1), len(y2))
@@ -402,16 +442,14 @@ class Plot(object):
             #raise ValueError("No open figures to plot.")
 
 if __name__ == "__main__":
-    p = Plot()
-
     import numpy as np
-    n = 20
-    x = np.random.random(n)
-    y = np.random.random(n)
-    z = 1 - 2. * np.random.normal(0, 2, [3, n])
-    dd =  {i: 100*z[i] for i in range(len(z))}
-
-
-    fig, ax = p.snapshot(x, y1_base=np.pi)
-
+    p = pyplot.figure(FigureClass=AwesomeFigure, type="paper")
+    x = np.arange(10)
+    ax = p.add_subplot(111, aspect="auto")
+    ax.scatter(1, 2, label="test")
+    ax.plot(x, x**2, label="quad")
+    ax.legend()
+    ax.set_xlabel("x label")
+    ax.set_ylabel("y label")
     p.show()
+    p.savefig("test")
