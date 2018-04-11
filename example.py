@@ -40,7 +40,7 @@ def test_case():
     A = nx.to_scipy_sparse_matrix(g, format="dok")
 
     z = np.zeros(g.number_of_nodes())
-    z[np.array(dict(g.degree()).values()) > 2] = 1
+    z[np.array(list(dict(g.degree()).values())) > 2] = 1
 
     layout = np.c_[pos, z]
 
