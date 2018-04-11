@@ -380,7 +380,7 @@ class Plot(object):
 
         return fig
 
-    def draw_contour(self, x, y, z, labels=['x', 'y', 'z'], nlevel=10, sym=False,
+    def draw_contour(self, x, y, z, labels=['x', 'y', 'z'], nlevel=10, cmap=None,
                     text=False, horizontal=False, pi=None, layout=True, fixed_scale=None, boundary=True,
                     colorbar=False):
         """
@@ -423,10 +423,10 @@ class Plot(object):
         if not np.isfinite(z).all():
             warnings.warn("Since z is not finite, it would be better to use layout=False.")
 
-        if sym:
-            cmap = pyplot.get_cmap('sym')
+        if cmap is None:
+            colormap = pyplot.get_cmap('linear')
         else:
-            cmap = pyplot.get_cmap('linear')
+            colormap = pyplot.get_cmap(cmap)
 
         backup = matplotlib.rcParams['lines.linewidth']
         matplotlib.rcParams['lines.linewidth'] = 1
