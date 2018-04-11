@@ -473,17 +473,30 @@ class Plot(object):
         ax.set_xlabel(labels[0])
         ax.set_ylabel(labels[1])
 
-        if pi == "xaxis":
-            x_label = np.empty(np.size(ax.get_xticks()), dtype='object')
-            for i in range(np.size(ax.get_xticks())):
-                x_label[i] = str(ax.get_xticks()[i]) + "$\pi$"
-            ax.set_xticklabels(x_label)
+        if pi is not None:
+            if pi == "xaxis":
+                ticklabels = np.empty(np.size(ax.get_xticks()), dtype='object')
+                ticks = ax.get_xticks()
+            elif pi == "yaxis":
+                ticklabels = np.empty(np.size(ax.get_yticks()), dtype='object')
+                ticks = ax.get_yticks()
+            else:
+                raise ValueError()
 
-        if pi == "yaxis":
-            y_label = np.empty(np.size(ax.get_yticks()), dtype='object')
-            for i in range(np.size(ax.get_yticks())):
-                y_label[i] = str(ax.get_yticks()[i]) + "$\pi$"
-            ax.set_yticklabels(y_label)
+            for i, tick in enumerate(ticks):
+                if np.isclose(tick, -np.pi, atol=0.05):
+                    ticklabels[i] = "$-\pi$"
+                elif np.isclose(tick, np.pi, atol=0.05):
+                    ticklabels[i] = "$\pi$"
+                elif tick == 0:
+                    ticklabels[i] = str(0)
+                else:
+                    ticklabels[i] = "{0:.1g}".format(tick / np.pi) + "$\pi$"
+
+            if pi == "xaxis":
+                ax.set_xticklabels(ticklabels)
+            elif pi == "yaxis":
+                ax.set_yticklabels(ticklabels)
 
         if colorbar and horizontal:
             fig.colorbar(c, label=labels[2], orientation='horizontal', pad=0.2)
