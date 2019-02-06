@@ -236,7 +236,7 @@ class Plot(object):
     ###############################################################################
 
 
-    def draw_lineplot(self, x=None, lines={}, shades={}, labels=['x', 'y'], marker="o", linewidth=None,
+    def draw_lineplot(self, figax=None, x=None, lines={}, shades={}, labels=['x', 'y'], marker="o", linewidth=None,
                      sortfunc=None, grid=False, infer_layout=True, legend=True):
         """
         Plots (multiple) lines with optional shading.
@@ -281,7 +281,10 @@ class Plot(object):
         # if shades:
         #     assert set(shades.keys()).issubset(lines.keys())
 
-        fig, ax = pyplot.subplots(nrows=1, ncols=1)
+        if figax is None:
+            fig, ax = pyplot.subplots(nrows=1, ncols=1)
+        else:
+            fig, ax = figax
 
         # determine boundaries and scale
         if infer_layout:
@@ -322,7 +325,7 @@ class Plot(object):
         ax.set_ylabel(labels[1])
         if legend:
             pyplot.legend(frameon=True)
-        fig.tight_layout()
+        #fig.tight_layout()
 
         self.figures.append(fig)
 
