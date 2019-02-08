@@ -39,7 +39,7 @@ from matplotlib.colors import ListedColormap, LinearSegmentedColormap, hex2color
 import seaborn
 
 # import additional colormaps https://github.com/BIDS/colormap
-import colormaps
+from . import colormaps
 
 # import warnings module to issue warnings on user input without interrupting the program
 import warnings
@@ -236,7 +236,7 @@ class Plot(object):
     ###############################################################################
 
 
-    def draw_lineplot(self, x=None, lines={}, shades={}, labels=['x', 'y'], marker="o", linewidth=None,
+    def draw_lineplot(self, figax=None, x=None, lines={}, shades={}, labels=['x', 'y'], marker="o", linewidth=None,
                      sortfunc=None, grid=False, infer_layout=True, legend=True):
         """
         Plots (multiple) lines with optional shading.
@@ -273,7 +273,7 @@ class Plot(object):
         #assert len(lines.keys()) <= self.dfcmp.N
 
         if x is None:
-            x = np.arange(len(lines[lines.keys()[0]]))
+            x = np.arange(len(lines[list(lines.keys())[0]]))
 
         if linewidth is None:
             linewidth = self.rc['lines.linewidth']
@@ -281,18 +281,21 @@ class Plot(object):
         # if shades:
         #     assert set(shades.keys()).issubset(lines.keys())
 
-        fig, ax = pyplot.subplots(nrows=1, ncols=1)
+        if figax is None:
+            fig, ax = pyplot.subplots(nrows=1, ncols=1)
+        else:
+            fig, ax = figax
 
         # determine boundaries and scale
         if infer_layout:
-            xmin = np.min(x.values()) if isinstance(x, dict) else np.min(x)
-            xmax = np.max(x.values()) if isinstance(x, dict) else np.max(x)
+            xmin = np.min(list(x.values())) if isinstance(x, dict) else np.min(x)
+            xmax = np.max(list(x.values())) if isinstance(x, dict) else np.max(x)
             if not shades:
-                ymin = np.min([np.min(l) for l in lines.itervalues()])
-                ymax = np.max([np.max(l) for l in lines.itervalues()])
+                ymin = np.min([np.min(l) for l in list(lines.values())])
+                ymax = np.max([np.max(l) for l in list(lines.values())])
             else:
-                ymin = np.min([np.min(l) for l in shades.itervalues()])
-                ymax = np.max([np.max(l) for l in shades.itervalues()])
+                ymin = np.min([np.min(l) for l in list(shades.values())])
+                ymax = np.max([np.max(l) for l in list(shades.values())])
 
             xmargin = (xmax - xmin) / 200.
             ymargin = (ymax - ymin) / 200.
@@ -304,9 +307,9 @@ class Plot(object):
         if grid:
             ax.grid()
 
-        for i in sorted(lines.keys(), key=sortfunc, reverse=False):
+        for i in sorted(list(lines.keys()), key=sortfunc, reverse=False):
             _x = x[i] if isinstance(x, dict) else x
-            if shades and i in shades.keys():
+            if shades and i in list(shades.keys()):
                 shade = ax.fill_between(_x, shades[i][0], shades[i][1], alpha=0.3, edgecolor='none', facecolor=hex2color('#8E908F'))
                 if infer_layout:
                     ax.plot(_x, lines[i], linewidth=linewidth, marker=marker, mew=3. * scale, mec=shade._facecolors[0], ms=10. * scale, label=i)
@@ -322,7 +325,7 @@ class Plot(object):
         ax.set_ylabel(labels[1])
         if legend:
             pyplot.legend(frameon=True)
-        fig.tight_layout()
+        #fig.tight_layout()
 
         self.figures.append(fig)
 
@@ -515,12 +518,12 @@ class Plot(object):
 
         if isinstance(x, dict):
             assert sorted(x.keys()) == sorted(y.keys())
-            assert len(x.keys()) <= self.dfcmp.N
+            assert len(list(x.keys())) <= self.dfcmp.N
             # determine boundaries
-            xmin = np.min([np.min(l) for l in x.itervalues()])
-            xmax = np.max([np.max(l) for l in x.itervalues()])
-            ymin = np.min([np.min(l) for l in y.itervalues()])
-            ymax = np.max([np.max(l) for l in y.itervalues()])
+            xmin = np.min([np.min(l) for l in list(x.values())])
+            xmax = np.max([np.max(l) for l in list(x.values())])
+            ymin = np.min([np.min(l) for l in list(y.values())])
+            ymax = np.max([np.max(l) for l in list(y.values())])
         else:
             # determine boundaries
             xmin = x.min()
@@ -563,8 +566,8 @@ class Plot(object):
         # ensure data is dict
         assert isinstance(data, dict)
 
-        xmin = np.min([np.min(l) for l in data.values()])
-        xmax = np.max([np.max(l) for l in data.values()])
+        xmin = np.min([np.min(l) for l in list(data.values())])
+        xmax = np.max([np.max(l) for l in list(data.values())])
 
         xmargin = (xmax - xmin) / 100.
 
@@ -575,8 +578,8 @@ class Plot(object):
         bottom = np.zeros(nbins)
         ymax = 0.
         counter = 0
-        _, b = np.histogram(data[data.keys()[0]], bins=nbins, density=True)
-        for d in sorted(data.keys(), key=sortfunc, reverse=False):
+        _, b = np.histogram(data[list(data.keys())[0]], bins=nbins, density=True)
+        for d in sorted(list(data.keys()), key=sortfunc, reverse=False):
             c = list(matplotlib.rcParams['axes.prop_cycle'])[counter]['color']
             h, _ = np.histogram(data[d], bins=nbins, density=True)
             ax.bar(.5 * (b[1:] + b[:-1]), h, bottom=bottom, color=c, edgecolor="none", align='center', zorder=1,
@@ -632,7 +635,7 @@ class Plot(object):
             assert isspmatrix_dok(adjacency)
             # print "Build network from sparse dok matrix."
             N = adjacency.shape[0]
-            edgelist = sorted(set([tuple(np.sort(key)) for key in adjacency.iterkeys()]))
+            edgelist = sorted(set([tuple(np.sort(key)) for key in list(adjacency.keys())]))
         else:
             N = len(adjacency)
             edgelist = np.vstack(np.where(adjacency > 0)).transpose()
@@ -652,23 +655,23 @@ class Plot(object):
             edge_color=np.repeat('#8e908f', len(edgelist)),
             edge_width=seaborn.axes_style()["axes.linewidth"],
             vertex_size=100,
-            vertex_label=range(N)
+            vertex_label=list(range(N))
         )
 
         if styles:
             visual_style.update(styles)
 
-        if not visual_style.has_key("layout"):
+        if "layout" not in visual_style:
             if height:
                 visual_style["layout"] = np.random.random([N, 3])
             else:
                 visual_style["layout"] = np.random.random([N, 2])
-            print "Assign random layout for plotting."
+            print("Assign random layout for plotting.")
 
 
-        if visual_style.has_key("edge_color_dict"):
-            min_color = np.min(visual_style["edge_color_dict"].values())
-            max_color = np.max(visual_style["edge_color_dict"].values())
+        if "edge_color_dict" in visual_style:
+            min_color = np.min(list(visual_style["edge_color_dict"].values()))
+            max_color = np.max(list(visual_style["edge_color_dict"].values()))
             f = lambda x: (np.float(visual_style["edge_color"][x]) - min_color) / (max_color - min_color)
             visual_style["edge_color"] = [f(e) for e in edgelist]
             alpha = 1.
@@ -679,12 +682,12 @@ class Plot(object):
         if height:
             fig = pyplot.figure()
             ax = fig.gca(projection='3d')
-            x, y, z = zip(*visual_style["layout"])
+            x, y, z = list(zip(*visual_style["layout"]))
             args = (x, y, z)
         else:
             fig, ax = pyplot.subplots(nrows=1, ncols=1)
             fig.tight_layout()
-            x, y = zip(*visual_style["layout"])
+            x, y = list(zip(*visual_style["layout"]))
             args = (x, y)
 
         # ax.axis("off")
@@ -733,7 +736,7 @@ class Plot(object):
         ax.set_xlim([np.min(x) - margin, np.max(x) + margin])
         ax.set_ylim([np.min(y) - margin, np.max(y) + margin])
 
-        if not visual_style.has_key("vertex_color"):
+        if "vertex_color" not in visual_style:
             nodes = ax.scatter(*args,
                                c='#8e908f',
                                s=visual_style["vertex_size"],
@@ -760,12 +763,12 @@ class Plot(object):
 
         if vertex_labels is None:
             if labels:
-                for i in xrange(N):
+                for i in range(N):
                     pyplot.annotate(str(i), xy=(x[i], y[i]), xytext=(3, 3), textcoords='offset points',
                                     # size=0.5 * self.rc["font.size"],
                                     horizontalalignment='left', verticalalignment='bottom')
         else:
-            for i in xrange(N):
+            for i in range(N):
                 pyplot.annotate(str(vertex_labels[i]), xy=(x[i], y[i]), xytext=(3, -25),
                                 textcoords='offset points',
                                 # size=0.5 * self.params["font.size"],
@@ -841,7 +844,7 @@ class Plot(object):
 
         n = max(len(y1), len(y2))
 
-        x = range(n)
+        x = list(range(n))
 
         fig, ax = pyplot.subplots(nrows=2, ncols=1, sharex=True)
 
@@ -904,7 +907,7 @@ class Plot(object):
         else:
             assert len(fnames) == len(self.figures)
             for i, fig in enumerate(self.figures):
-                print "save:", fnames[i] + '.' + self.figure_format
+                print(("save:", fnames[i] + '.' + self.figure_format))
                 fig.savefig(fnames[i] + '.' + self.figure_format, bbox_inches='tight', transparent=self.transparent)
                 pyplot.close(fig)
             for i, fig in enumerate(self.figures):
@@ -938,10 +941,10 @@ class Plot(object):
         pyplot.show()
 
     def update_params(self, dic):
-        assert all([key in matplotlib.rcParams.keys() for key in dic.keys()])
+        assert all([key in list(matplotlib.rcParams.keys()) for key in list(dic.keys())])
         self.rc.update(dic)
         # do not use seaborn.set(), this overrides all rc params ...
-        for key, val in dic.iteritems():
+        for key, val in list(dic.items()):
             matplotlib.rcParams[key] = val
 
 
@@ -1024,7 +1027,7 @@ class AddonPandas(object):
         dd = df.to_dict()
 
         # remove sub-dictionaries
-        return {key: dd[key].values() for key in dd.keys()}
+        return {key: list(dd[key].values()) for key in list(dd.keys())}
 
     ###############################################################################
     # ##                      PRIVATE FUNCTIONS                                ## #
@@ -1061,8 +1064,8 @@ class AddonPandas(object):
     def draw_scatterplot(self, df, x, y, factor=None, bins=20, show_annot=None, kind="scatter", kdeplot=False, c_map="linear"):
 
         # FIXME: check, whether x and y are columns of df
-        assert isinstance(x, basestring)
-        assert isinstance(y, basestring)
+        assert isinstance(x, str)
+        assert isinstance(y, str)
 
         if kdeplot:
             c = "k"
@@ -1070,7 +1073,7 @@ class AddonPandas(object):
             if factor is None:
                 c = self.pik_colours.colors[0]
             else:
-                assert isinstance(factor, basestring)
+                assert isinstance(factor, str)
                 c = df[factor]
 
         xmin = df[x].min()
